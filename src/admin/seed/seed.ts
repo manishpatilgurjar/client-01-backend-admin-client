@@ -1,0 +1,32 @@
+import 'dotenv/config';
+import { DatabaseProvider } from '../../db';
+import { AdminUserModel } from '../models/user.schema';
+
+async function seedAdmin() {
+  const dbProvider = new DatabaseProvider();
+  await dbProvider.connect();
+
+  const existing = await AdminUserModel.findOne({ role: 'admin' });
+  if (!existing) {
+    const admin = new AdminUserModel({
+      username: 'admin',
+      email: 'admin@example.com',
+      password: 'admin123',
+      profilePic: 'https://example.com/profile-pic.png',
+      deviceData: 'Windows 10, Chrome 120',
+      fullName: 'Default Admin',
+      phone: '+1234567890',
+      address: '123 Admin Street, Admin City',
+    });
+    await admin.save();
+    console.log('Default admin user created.');
+  } else {
+    console.log('Admin user already exists.');
+  }
+  process.exit(0);
+}
+
+seedAdmin().catch((err) => {
+  console.error('Seeding error:', err);
+  process.exit(1);
+}); 
