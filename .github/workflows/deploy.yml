@@ -25,9 +25,28 @@ jobs:
       - name: Deploy to EC2
         run: |
           ssh -o StrictHostKeyChecking=no -i key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-            cd ~/my-app
+            # Go to correct directory
+            cd ~/client-01-backend-admin-client
+
+            # Pull latest code
             git pull origin main
+
+            # Ensure node and npm are installed (Node v24 is already present)
+            if ! command -v npm &> /dev/null; then
+              echo "Installing npm..."
+              sudo apt update
+              sudo apt install -y npm
+            fi
+
+            # Ensure pm2 is installed
+            if ! command -v pm2 &> /dev/null; then
+              sudo npm install -g pm2
+            fi
+
+            # Install dependencies and build
             npm install
             npm run build
+
+            # Restart or start the app
             pm2 restart my-app || pm2 start dist/main.js --name my-app
           EOF
