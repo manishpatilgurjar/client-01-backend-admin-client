@@ -38,4 +38,12 @@ export class AdminLoginResponseDto {
     phone?: string;
     address?: string;
   };
+}
+
+/**
+ * DTO for logout requests.
+ * Contains the access token for logout.
+ */
+export class LogoutRequestDto {
+  accessToken: string;
 } 

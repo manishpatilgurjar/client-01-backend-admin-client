@@ -6,5 +6,6 @@ export enum AdminMessages {
   LOGIN_INVALID_TOKEN = 'Invalid or expired access token',
   LOGIN_USER_NOT_FOUND = 'User not found or not authorized',
   ACCESS_TOKEN_REFRESHED = 'Access token refreshed',
+  LOGOUT_SUCCESS = 'Logout successful',
   PROFILE_FETCHED_SUCCESS = 'Profile fetched successfully',
 }

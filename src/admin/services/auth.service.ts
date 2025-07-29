@@ -38,21 +38,15 @@ export class AuthService {
       // If password does not match, throw error
       throw new UnauthorizedException(AdminMessages.LOGIN_INVALID_CREDENTIALS);
     }
-    // 3. Generate access token (short-lived, e.g. 15 minutes)
-    const accessToken: string = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET || 'secret',
-      { expiresIn: '15m' }
-    );
-    // 4. Generate refresh token (long-lived, e.g. 7 days)
+    // 3. Generate refresh token (long-lived, e.g. 7 days)
     const refreshToken: string = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_REFRESH_SECRET || 'refreshsecret',
       { expiresIn: '7d' }
     );
-    // 5. Save refresh token in DB for future validation and revocation
+    // 4. Save refresh token in DB for future validation and revocation
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
-    await RefreshTokenModel.create({
+    const refreshTokenDoc = await RefreshTokenModel.create({
       userId: user._id, // Reference to the admin user
       token: refreshToken, // The refresh token string
       expiresAt, // Expiry date for the refresh token
@@ -60,6 +54,12 @@ export class AuthService {
       ipAddress: dto.ipAddress, // IP address from login request
       location: dto.location, // Location coordinates from login request
     });
+    // 5. Generate access token (short-lived, e.g. 15 minutes) with g_id
+    const accessToken: string = jwt.sign(
+      { id: user._id, role: user.role, g_id: refreshTokenDoc._id },
+      process.env.JWT_SECRET || 'secret',
+      { expiresIn: '15m' }
+    );
     // 6. Send login notification email to the admin
      this.mailService.sendLoginNotification(
       user.email,
@@ -107,7 +107,7 @@ export class AuthService {
     }
     // 4. Generate a new access token
     const accessToken: string = jwt.sign(
-      { id: user._id, role: user.role },
+      { id: user._id, role: user.role, g_id: tokenDoc._id },
       process.env.JWT_SECRET || 'secret',
       { expiresIn: '15m' }
     );
@@ -125,5 +125,32 @@ export class AuthService {
         address: user.address,
       },
     };
+  }
+
+  /**
+   * Handles admin logout by invalidating the refresh token.
+   * @param accessToken - The access token containing g_id
+   * @returns Success message (always returns success for security)
+   */
+  async logout(accessToken: string): Promise<{ message: string }> {
+    try {
+      // 1. Decode the access token to get g_id
+      const decoded = jwt.verify(accessToken, process.env.JWT_SECRET || 'secret') as any;
+      
+      if (!decoded.g_id) {
+        // Token is invalid but return success for security
+        return { message: AdminMessages.LOGOUT_SUCCESS };
+      }
+
+      // 2. Delete the refresh token record from the database
+      const deletedToken = await RefreshTokenModel.findByIdAndDelete(decoded.g_id);
+      
+      // 3. Return success message regardless of whether token was found
+      return { message: AdminMessages.LOGOUT_SUCCESS };
+    } catch (error) {
+      // If JWT verification fails or any other error, still return success
+      // This prevents token enumeration attacks
+      return { message: AdminMessages.LOGOUT_SUCCESS };
+    }
   }
 } 

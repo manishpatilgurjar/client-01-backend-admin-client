@@ -5,6 +5,15 @@ import { DatabaseProvider } from './db';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  
+  // Enable CORS with all origins allowed
+  app.enableCors({
+    origin: true, // Allow all origins
+    credentials: true, // Allow credentials (cookies, authorization headers)
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  });
+  
   // Connect to the database before starting the server
   const dbProvider = app.get(DatabaseProvider);
   try {

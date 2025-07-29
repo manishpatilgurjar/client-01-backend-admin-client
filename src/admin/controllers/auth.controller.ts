@@ -1,6 +1,6 @@
 import { Controller, Post, Body, HttpCode } from '@nestjs/common';
 import { AuthService } from '../services/auth.service';
-import { AdminLoginDto, RefreshTokenRequestDto } from '../enums/login.dto';
+import { AdminLoginDto, RefreshTokenRequestDto, LogoutRequestDto } from '../enums/login.dto';
 import { AdminSuccessResponse, AdminErrorResponse } from '../enums/response';
 import { AdminMessages } from '../enums/messages';
 // import { ResponseCodes } from 'src/enum/responseCodes';
@@ -47,5 +47,18 @@ export class AuthController {
   async refresh(@Body() dto: RefreshTokenRequestDto): Promise<AdminSuccessResponse> {
     const result = await this.authService.refreshAccessToken(dto.refreshToken);
     return new AdminSuccessResponse(AdminMessages.ACCESS_TOKEN_REFRESHED, result);
+  }
+
+  /**
+   * POST /admin/auth/logout
+   * Handles admin logout by invalidating the refresh token.
+   * @param dto - LogoutRequestDto containing the access token
+   * @returns AdminSuccessResponse with logout success message
+   */
+  @Post('logout')
+  @HttpCode(200)
+  async logout(@Body() dto: LogoutRequestDto): Promise<AdminSuccessResponse> {
+    const result = await this.authService.logout(dto.accessToken);
+    return new AdminSuccessResponse(result.message, {});
   }
 } 
