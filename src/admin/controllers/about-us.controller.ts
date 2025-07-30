@@ -50,8 +50,14 @@ export class AboutUsController {
   @Post('upload-main-image')
   @UseInterceptors(FileUploadInterceptor)
   async uploadMainImage(@UploadedFile() file: Express.Multer.File) {
-    const imageUrl = await this.aboutUsService.uploadTeamMemberImage(file);
-    return new AdminSuccessResponse('Main image uploaded successfully', { imageUrl });
+    try {
+      const imageUrl = await this.aboutUsService.uploadMainImage(file);
+      // Update the main image URL in the database
+      await this.aboutUsService.updateMainImage(imageUrl);
+      return new AdminSuccessResponse('Main image uploaded successfully', { imageUrl });
+    } catch (error) {
+      throw error;
+    }
   }
 
   /**

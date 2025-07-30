@@ -54,6 +54,32 @@ export class AboutUsService {
   }
 
   /**
+   * Upload main about us image
+   */
+  async uploadMainImage(file: Express.Multer.File): Promise<string> {
+    return await this.s3UploadService.uploadFile(file, 'about-main');
+  }
+
+  /**
+   * Update main image URL in database
+   */
+  async updateMainImage(imageUrl: string) {
+    const about = await AboutUsModel.findOne();
+    if (!about) {
+      // Create new About Us if doesn't exist
+      await AboutUsModel.create({
+        mainTitle: 'About Us',
+        mainDescription: 'About Us description',
+        mainImage: imageUrl,
+      });
+    } else {
+      // Update existing About Us
+      about.mainImage = imageUrl;
+      await about.save();
+    }
+  }
+
+  /**
    * Upload team member image
    */
   async uploadTeamMemberImage(file: Express.Multer.File): Promise<string> {
