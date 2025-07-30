@@ -127,10 +127,13 @@ export class AboutUsController {
   @Post('sections/:id/upload-image')
   @UseInterceptors(FileUploadInterceptor)
   async uploadSectionImageById(@Param('id') id: string, @UploadedFile() file: Express.Multer.File) {
-    const imageUrl = await this.aboutUsService.uploadSectionImage(file);
-    // Update the section with the new image URL
-    await this.aboutUsService.updateSection(id, { image: imageUrl });
-    return new AdminSuccessResponse('Section image uploaded successfully', { imageUrl });
+    try {
+      const imageUrl = await this.aboutUsService.uploadSectionImage(file);
+      await this.aboutUsService.updateSection(id, { image: imageUrl });
+      return new AdminSuccessResponse('Section image uploaded successfully', { imageUrl });
+    } catch (error) {
+      throw error;
+    }
   }
 
   // ==================== TEAM MEMBER ENDPOINTS ====================
@@ -184,9 +187,12 @@ export class AboutUsController {
   @Post('team-members/:id/upload-image')
   @UseInterceptors(FileUploadInterceptor)
   async uploadTeamMemberImageById(@Param('id') id: string, @UploadedFile() file: Express.Multer.File) {
-    const imageUrl = await this.aboutUsService.uploadTeamMemberImage(file);
-    // Update the team member with the new image URL
-    await this.aboutUsService.updateTeamMember(id, { image: imageUrl });
-    return new AdminSuccessResponse('Team member image uploaded successfully', { imageUrl });
+    try {
+      const imageUrl = await this.aboutUsService.uploadTeamMemberImage(file);
+      await this.aboutUsService.updateTeamMember(id, { image: imageUrl });
+      return new AdminSuccessResponse('Team member image uploaded successfully', { imageUrl });
+    } catch (error) {
+      throw error;
+    }
   }
 } 

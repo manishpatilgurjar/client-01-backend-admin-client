@@ -84,8 +84,24 @@ export class AboutUsService {
     const sectionIndex = about.sections.findIndex(section => section._id?.toString() === sectionId);
     if (sectionIndex === -1) throw new NotFoundException('Section not found.');
 
-    // Update the section
-    about.sections[sectionIndex] = { ...about.sections[sectionIndex], ...sectionData };
+    // Extract only the actual data fields from the Mongoose subdocument
+    const currentSection = {
+      title: about.sections[sectionIndex].title,
+      content: about.sections[sectionIndex].content,
+      order: about.sections[sectionIndex].order,
+      image: about.sections[sectionIndex].image,
+      _id: about.sections[sectionIndex]._id
+    };
+    
+    // Update the section - only update fields that are not undefined
+    const updatedSection = { ...currentSection };
+    Object.keys(sectionData).forEach(key => {
+      if (sectionData[key] !== undefined) {
+        updatedSection[key] = sectionData[key];
+      }
+    });
+    
+    about.sections[sectionIndex] = updatedSection;
     about.markModified('sections');
     
     const updated = await about.save();
@@ -97,13 +113,37 @@ export class AboutUsService {
    */
   async updateTeamMember(memberId: string, memberData: any) {
     const about = await AboutUsModel.findOne();
-    if (!about) throw new NotFoundException('About Us not found.');
+    if (!about) {
+      throw new NotFoundException('About Us not found.');
+    }
 
     const memberIndex = about.teamMembers.findIndex(member => member._id?.toString() === memberId);
-    if (memberIndex === -1) throw new NotFoundException('Team member not found.');
+    if (memberIndex === -1) {
+      throw new NotFoundException('Team member not found.');
+    }
 
-    // Update the team member
-    about.teamMembers[memberIndex] = { ...about.teamMembers[memberIndex], ...memberData };
+    // Extract only the actual data fields from the Mongoose subdocument
+    const currentMember = {
+      name: about.teamMembers[memberIndex].name,
+      position: about.teamMembers[memberIndex].position,
+      bio: about.teamMembers[memberIndex].bio,
+      email: about.teamMembers[memberIndex].email,
+      order: about.teamMembers[memberIndex].order,
+      image: about.teamMembers[memberIndex].image,
+      linkedin: about.teamMembers[memberIndex].linkedin,
+      twitter: about.teamMembers[memberIndex].twitter,
+      _id: about.teamMembers[memberIndex]._id
+    };
+    
+    // Update the team member - only update fields that are not undefined
+    const updatedMember = { ...currentMember };
+    Object.keys(memberData).forEach(key => {
+      if (memberData[key] !== undefined) {
+        updatedMember[key] = memberData[key];
+      }
+    });
+    
+    about.teamMembers[memberIndex] = updatedMember;
     about.markModified('teamMembers');
     
     const updated = await about.save();

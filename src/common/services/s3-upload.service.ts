@@ -33,7 +33,9 @@ export class S3UploadService {
 
     await this.s3Client.send(command);
     
-    return `https://${this.bucketName}.s3.${process.env.AWS_REGION || 'ap-south-1'}.amazonaws.com/${fileName}`;
+    const imageUrl = `https://${this.bucketName}.s3.${process.env.AWS_REGION || 'ap-south-1'}.amazonaws.com/${fileName}`;
+    
+    return imageUrl;
   }
 
   /**
