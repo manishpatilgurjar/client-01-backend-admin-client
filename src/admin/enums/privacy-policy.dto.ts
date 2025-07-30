@@ -1,6 +1,6 @@
 import { IsString, IsOptional } from 'class-validator';
 
-export class UpdateAboutUsDto {
+export class UpdatePrivacyPolicyDto {
   @IsOptional() @IsString() title?: string;
-  @IsOptional() @IsString() description?: string;
+  @IsOptional() @IsString() policyDescription?: string;
 } 

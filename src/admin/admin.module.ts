@@ -6,18 +6,20 @@ import { ProfileController } from './controllers/profile.controller';
 import { AdminAuthMiddleware } from './middleware/auth.middleware';
 import { AboutUsController } from './controllers/about-us.controller';
 import { AboutUsService } from './services/about-us.service';
+import { PrivacyPolicyController } from './controllers/privacy-policy.controller';
+import { PrivacyPolicyService } from './services/privacy-policy.service';
 
 /**
  * AdminModule bundles all admin-related controllers and services.
  * Import this module in AppModule to enable admin APIs.
  */
 @Module({
-  controllers: [AuthController, ProfileController, AboutUsController],
-  providers: [AuthService, MailService, AboutUsService],
+  controllers: [AuthController, ProfileController, AboutUsController, PrivacyPolicyController],
+  providers: [AuthService, MailService, AboutUsService, PrivacyPolicyService],
   exports: [AuthService],
 })
 export class AdminModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(AdminAuthMiddleware).forRoutes('admin/profile', 'admin/about-us');
+    consumer.apply(AdminAuthMiddleware).forRoutes('admin/profile', 'admin/about-us', 'admin/privacy-policy');
   }
 } 

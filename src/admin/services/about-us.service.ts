@@ -1,20 +1,11 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { AboutUsModel } from '../models/about-us.schema';
-import { CreateAboutUsDto, UpdateAboutUsDto } from '../enums/about-us.dto';
+import { UpdateAboutUsDto } from '../enums/about-us.dto';
 
 @Injectable()
 export class AboutUsService {
   /**
-   * Create About Us (only one allowed)
-   */
-  async create(dto: CreateAboutUsDto) {
-    const existing = await AboutUsModel.findOne();
-    if (existing) throw new BadRequestException('About Us already exists.');
-    return AboutUsModel.create(dto);
-  }
-
-  /**
-   * Get About Us (public or admin)
+   * Get About Us
    */
   async get() {
     const about = await AboutUsModel.findOne();
@@ -23,20 +14,26 @@ export class AboutUsService {
   }
 
   /**
-   * Update About Us (by id)
+   * Update About Us (creates if doesn't exist)
    */
-  async update(id: string, dto: UpdateAboutUsDto) {
-    const about = await AboutUsModel.findByIdAndUpdate(id, dto, { new: true });
-    if (!about) throw new NotFoundException('About Us not found.');
-    return about;
-  }
-
-  /**
-   * Delete About Us (by id)
-   */
-  async delete(id: string) {
-    const about = await AboutUsModel.findByIdAndDelete(id);
-    if (!about) throw new NotFoundException('About Us not found.');
-    return about;
+  async update(dto: UpdateAboutUsDto) {
+    const about = await AboutUsModel.findOne();
+    
+    if (about) {
+      // Update existing
+      const updated = await AboutUsModel.findByIdAndUpdate(
+        about._id, 
+        dto, 
+        { new: true }
+      );
+      return updated;
+    } else {
+      // Create new if doesn't exist
+      const newAbout = await AboutUsModel.create({
+        title: dto.title || 'About Us',
+        description: dto.description || 'About Us description',
+      });
+      return newAbout;
+    }
   }
 } 

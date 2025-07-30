@@ -1,6 +1,6 @@
-import { Controller, Post, Get, Patch, Delete, Param, Body, UsePipes, ValidationPipe, Req, HttpCode } from '@nestjs/common';
+import { Controller, Get, Patch, Body, UsePipes, ValidationPipe } from '@nestjs/common';
 import { AboutUsService } from '../services/about-us.service';
-import { CreateAboutUsDto, UpdateAboutUsDto } from '../enums/about-us.dto';
+import { UpdateAboutUsDto } from '../enums/about-us.dto';
 import { AdminSuccessResponse } from '../enums/response';
 import { AdminMessages } from '../enums/messages';
 
@@ -8,30 +8,24 @@ import { AdminMessages } from '../enums/messages';
 export class AboutUsController {
   constructor(private readonly aboutUsService: AboutUsService) {}
 
-  @Post()
-  @UsePipes(new ValidationPipe({ whitelist: true }))
-  async create(@Body() dto: CreateAboutUsDto) {
-    const about = await this.aboutUsService.create(dto);
-    return new AdminSuccessResponse('About Us created successfully', about);
-  }
-
+  /**
+   * GET /admin/about-us
+   * Get About Us information
+   */
   @Get()
   async get() {
     const about = await this.aboutUsService.get();
-    return new AdminSuccessResponse('About Us fetched successfully', about);
+    return new AdminSuccessResponse(AdminMessages.ABOUT_US_FETCHED_SUCCESS, about);
   }
 
-  @Patch(':id')
+  /**
+   * PATCH /admin/about-us
+   * Update About Us information (creates if doesn't exist)
+   */
+  @Patch()
   @UsePipes(new ValidationPipe({ whitelist: true }))
-  async update(@Param('id') id: string, @Body() dto: UpdateAboutUsDto) {
-    const about = await this.aboutUsService.update(id, dto);
-    return new AdminSuccessResponse('About Us updated successfully', about);
-  }
-
-  @Delete(':id')
-  @HttpCode(204)
-  async delete(@Param('id') id: string) {
-    await this.aboutUsService.delete(id);
-    return;
+  async update(@Body() dto: UpdateAboutUsDto) {
+    const about = await this.aboutUsService.update(dto);
+    return new AdminSuccessResponse(AdminMessages.ABOUT_US_UPDATED_SUCCESS, about);
   }
 } 

@@ -8,4 +8,8 @@ export enum AdminMessages {
   ACCESS_TOKEN_REFRESHED = 'Access token refreshed',
   LOGOUT_SUCCESS = 'Logout successful',
   PROFILE_FETCHED_SUCCESS = 'Profile fetched successfully',
+  ABOUT_US_FETCHED_SUCCESS = 'About Us fetched successfully',
+  ABOUT_US_UPDATED_SUCCESS = 'About Us updated successfully',
+  PRIVACY_POLICY_FETCHED_SUCCESS = 'Privacy Policy fetched successfully',
+  PRIVACY_POLICY_UPDATED_SUCCESS = 'Privacy Policy updated successfully',
 }
