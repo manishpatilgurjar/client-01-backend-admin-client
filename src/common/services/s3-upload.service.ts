@@ -29,7 +29,6 @@ export class S3UploadService {
       Key: fileName,
       Body: file.buffer,
       ContentType: file.mimetype,
-      ACL: 'public-read',
     });
 
     await this.s3Client.send(command);
@@ -69,7 +68,6 @@ export class S3UploadService {
       Bucket: this.bucketName,
       Key: key,
       ContentType: contentType,
-      ACL: 'public-read',
     });
 
     return await getSignedUrl(this.s3Client, command, { expiresIn: 3600 });
