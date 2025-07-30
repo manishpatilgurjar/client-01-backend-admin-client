@@ -21,6 +21,8 @@
     "seed:admin": "ts-node src/admin/seed/seed.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.856.0",
+    "@aws-sdk/s3-request-presigner": "^3.856.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
@@ -28,6 +30,7 @@
     "@nestjs/platform-express": "^11.0.1",
     "@types/bcrypt": "^6.0.0",
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/multer": "^2.0.0",
     "@types/node-fetch": "^2.6.12",
     "@types/nodemailer": "^6.4.17",
     "bcrypt": "^6.0.0",
@@ -35,6 +38,7 @@
     "class-validator": "^0.14.2",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.16.4",
+    "multer": "^2.0.2",
     "nest-winston": "^1.10.2",
     "node-fetch": "^2.7.0",
     "nodemailer": "^7.0.5",

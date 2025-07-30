@@ -8,6 +8,7 @@ import { AboutUsController } from './controllers/about-us.controller';
 import { AboutUsService } from './services/about-us.service';
 import { PrivacyPolicyController } from './controllers/privacy-policy.controller';
 import { PrivacyPolicyService } from './services/privacy-policy.service';
+import { S3UploadService } from '../common/services/s3-upload.service';
 
 /**
  * AdminModule bundles all admin-related controllers and services.
@@ -15,7 +16,7 @@ import { PrivacyPolicyService } from './services/privacy-policy.service';
  */
 @Module({
   controllers: [AuthController, ProfileController, AboutUsController, PrivacyPolicyController],
-  providers: [AuthService, MailService, AboutUsService, PrivacyPolicyService],
+  providers: [AuthService, MailService, AboutUsService, PrivacyPolicyService, S3UploadService],
   exports: [AuthService],
 })
 export class AdminModule {
