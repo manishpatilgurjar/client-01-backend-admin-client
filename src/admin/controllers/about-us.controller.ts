@@ -79,6 +79,17 @@ export class AboutUsController {
   // ==================== SECTION ENDPOINTS ====================
 
   /**
+   * POST /admin/about-us/sections
+   * Add new section
+   */
+  @Post('sections')
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  async addSection(@Body() dto: AboutSectionDto) {
+    const section = await this.aboutUsService.addSection(dto);
+    return new AdminSuccessResponse('Section added successfully', section);
+  }
+
+  /**
    * GET /admin/about-us/sections/:id
    * Get section by ID
    */
@@ -123,6 +134,17 @@ export class AboutUsController {
   }
 
   // ==================== TEAM MEMBER ENDPOINTS ====================
+
+  /**
+   * POST /admin/about-us/team-members
+   * Add new team member
+   */
+  @Post('team-members')
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  async addTeamMember(@Body() dto: TeamMemberDto) {
+    const member = await this.aboutUsService.addTeamMember(dto);
+    return new AdminSuccessResponse('Team member added successfully', member);
+  }
 
   /**
    * GET /admin/about-us/team-members/:id

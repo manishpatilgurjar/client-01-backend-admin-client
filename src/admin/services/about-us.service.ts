@@ -179,4 +179,50 @@ export class AboutUsService {
 
     return member;
   }
+
+  /**
+   * Add new team member
+   */
+  async addTeamMember(memberData: any) {
+    const about = await AboutUsModel.findOne();
+    if (!about) {
+      // Create new About Us if doesn't exist
+      const newAbout = await AboutUsModel.create({
+        mainTitle: 'About Us',
+        mainDescription: 'About Us description',
+        teamMembers: [memberData],
+      });
+      return newAbout.teamMembers[0];
+    }
+
+    // Add to existing team members
+    about.teamMembers.push(memberData);
+    about.markModified('teamMembers');
+    
+    const updated = await about.save();
+    return updated.teamMembers[updated.teamMembers.length - 1];
+  }
+
+  /**
+   * Add new section
+   */
+  async addSection(sectionData: any) {
+    const about = await AboutUsModel.findOne();
+    if (!about) {
+      // Create new About Us if doesn't exist
+      const newAbout = await AboutUsModel.create({
+        mainTitle: 'About Us',
+        mainDescription: 'About Us description',
+        sections: [sectionData],
+      });
+      return newAbout.sections[0];
+    }
+
+    // Add to existing sections
+    about.sections.push(sectionData);
+    about.markModified('sections');
+    
+    const updated = await about.save();
+    return updated.sections[updated.sections.length - 1];
+  }
 } 
