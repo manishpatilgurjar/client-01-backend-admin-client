@@ -108,8 +108,8 @@ export class DashboardService {
    */
   private async getRecentActivity(): Promise<RecentActivity[]> {
     try {
-      // Get recent activities from activity log
-      const activities = await this.activityLogService.getRecentActivities(10);
+      // Get recent activities from activity log - limit to 8 records
+      const activities = await this.activityLogService.getRecentActivities(7);
       
       // If no activities in log, generate some from recent data
       if (activities.length === 0) {
@@ -196,10 +196,10 @@ export class DashboardService {
       type: 'system'
     });
 
-    // Sort by time (most recent first) and limit to 10
+    // Sort by time (most recent first) and limit to 8
     return activities
       .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
-      .slice(0, 10);
+      .slice(0, 8);
   }
 
   /**
