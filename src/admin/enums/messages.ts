@@ -20,4 +20,10 @@ export enum AdminMessages {
   PRODUCT_IMAGE_UPLOADED_SUCCESS = 'Product image uploaded successfully',
   PRODUCT_STATUS_UPDATED_SUCCESS = 'Product status updated successfully',
   PRODUCT_IMAGE_REMOVED_SUCCESS = 'Product image removed successfully',
+  FAQS_FETCHED_SUCCESS = 'FAQs fetched successfully',
+  FAQ_FETCHED_SUCCESS = 'FAQ fetched successfully',
+  FAQ_CREATED_SUCCESS = 'FAQ created successfully',
+  FAQ_UPDATED_SUCCESS = 'FAQ updated successfully',
+  FAQ_DELETED_SUCCESS = 'FAQ deleted successfully',
+  FAQ_STATUS_UPDATED_SUCCESS = 'FAQ status updated successfully',
 }
