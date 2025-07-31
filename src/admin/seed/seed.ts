@@ -1,6 +1,8 @@
 import 'dotenv/config';
 import { DatabaseProvider } from '../../db';
 import { AdminUserModel } from '../models/user.schema';
+import { seedIndexPage } from './index-page.seed';
+
 
 async function seedAdmin() {
   const dbProvider = new DatabaseProvider();
@@ -23,6 +25,10 @@ async function seedAdmin() {
   } else {
     console.log('Admin user already exists.');
   }
+
+  // Seed index page
+  await seedIndexPage();
+  
   process.exit(0);
 }
 

@@ -2,10 +2,14 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { AboutUsModel } from '../models/about-us.schema';
 import { UpdateAboutUsDto } from '../enums/about-us.dto';
 import { S3UploadService } from '../../common/services/s3-upload.service';
+import { ActivityLogService } from './activity-log.service';
 
 @Injectable()
 export class AboutUsService {
-  constructor(private readonly s3UploadService: S3UploadService) {}
+  constructor(
+    private readonly s3UploadService: S3UploadService,
+    private readonly activityLogService: ActivityLogService
+  ) {}
 
   /**
    * Get About Us
@@ -19,7 +23,7 @@ export class AboutUsService {
   /**
    * Update About Us (creates if doesn't exist)
    */
-  async update(dto: UpdateAboutUsDto, file?: Express.Multer.File) {
+  async update(dto: UpdateAboutUsDto, file?: Express.Multer.File, userId?: string, userEmail?: string) {
     const about = await AboutUsModel.findOne();
     
     // Handle main image upload if provided
@@ -35,6 +39,10 @@ export class AboutUsService {
         dto, 
         { new: true }
       );
+
+      // Log the activity
+      await this.activityLogService.logPageUpdated('About Us', userId, userEmail);
+
       return updated;
     } else {
       // Create new if doesn't exist
@@ -49,6 +57,17 @@ export class AboutUsService {
         address: dto.address,
         socialLinks: dto.socialLinks,
       });
+
+      // Log the activity
+      await this.activityLogService.logActivity({
+        action: 'About Us Created',
+        entity: 'Page',
+        entityName: 'About Us',
+        userId,
+        userEmail,
+        type: 'create'
+      });
+
       return newAbout;
     }
   }

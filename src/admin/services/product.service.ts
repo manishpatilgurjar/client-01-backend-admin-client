@@ -2,10 +2,14 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { ProductModel } from '../models/product.schema';
 import { CreateProductDto, UpdateProductDto, UpdateProductStatusDto } from '../enums/product.dto';
 import { S3UploadService } from '../../common/services/s3-upload.service';
+import { ActivityLogService } from './activity-log.service';
 
 @Injectable()
 export class ProductService {
-  constructor(private readonly s3UploadService: S3UploadService) {}
+  constructor(
+    private readonly s3UploadService: S3UploadService,
+    private readonly activityLogService: ActivityLogService
+  ) {}
 
   /**
    * Get all products with pagination
@@ -60,20 +64,29 @@ export class ProductService {
   /**
    * Create new product
    */
-  async createProduct(dto: CreateProductDto) {
+  async createProduct(dto: CreateProductDto, userId?: string, userEmail?: string) {
     const product = await ProductModel.create({
       ...dto,
       status: dto.status || 'Draft',
       isPublished: dto.isPublished || false,
       images: dto.images || []
     });
+
+    // Log the activity
+    await this.activityLogService.logProductCreated(
+      (product._id as any).toString(),
+      product.name,
+      userId,
+      userEmail
+    );
+
     return product;
   }
 
   /**
    * Update product by ID
    */
-  async updateProduct(id: string, dto: UpdateProductDto) {
+  async updateProduct(id: string, dto: UpdateProductDto, userId?: string, userEmail?: string) {
     const product = await ProductModel.findById(id);
     if (!product) {
       throw new NotFoundException('Product not found.');
@@ -94,6 +107,15 @@ export class ProductService {
 
     product.lastModified = new Date();
     await product.save();
+
+    // Log the activity
+    await this.activityLogService.logProductUpdated(
+      (product._id as any).toString(),
+      product.name,
+      userId,
+      userEmail
+    );
+
     return product;
   }
 
@@ -123,7 +145,7 @@ export class ProductService {
   /**
    * Delete product by ID
    */
-  async deleteProduct(id: string) {
+  async deleteProduct(id: string, userId?: string, userEmail?: string) {
     const product = await ProductModel.findById(id);
     if (!product) {
       throw new NotFoundException('Product not found.');
@@ -135,6 +157,14 @@ export class ProductService {
         await this.s3UploadService.deleteFile(imageUrl);
       }
     }
+
+    // Log the activity before deletion
+    await this.activityLogService.logProductDeleted(
+      (product._id as any).toString(),
+      product.name,
+      userId,
+      userEmail
+    );
 
     await ProductModel.findByIdAndDelete(id);
     return { id: product._id, deletedAt: new Date() };
@@ -174,7 +204,7 @@ export class ProductService {
   /**
    * Update product status
    */
-  async updateProductStatus(id: string, dto: UpdateProductStatusDto) {
+  async updateProductStatus(id: string, dto: UpdateProductStatusDto, userId?: string, userEmail?: string) {
     const product = await ProductModel.findById(id);
     if (!product) {
       throw new NotFoundException('Product not found.');
@@ -184,6 +214,15 @@ export class ProductService {
     product.isPublished = dto.isPublished;
     product.lastModified = new Date();
     await product.save();
+
+    // Log the activity
+    await this.activityLogService.logProductStatusChanged(
+      (product._id as any).toString(),
+      product.name,
+      dto.status,
+      userId,
+      userEmail
+    );
 
     return {
       id: product._id,

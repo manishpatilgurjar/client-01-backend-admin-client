@@ -39,7 +39,8 @@ export class AboutUsController {
   @Patch()
   @UsePipes(new ValidationPipe({ whitelist: true }))
   async update(@Body() dto: UpdateAboutUsDto) {
-    const about = await this.aboutUsService.update(dto);
+    // TODO: Get user info from JWT token when auth is implemented
+    const about = await this.aboutUsService.update(dto, undefined, 'admin', 'admin@example.com');
     return new AdminSuccessResponse(AdminMessages.ABOUT_US_UPDATED_SUCCESS, about);
   }
 

@@ -51,7 +51,8 @@ export class FAQController {
   @Post()
   @UsePipes(new ValidationPipe({ whitelist: true }))
   async createFAQ(@Body() dto: CreateFAQDto) {
-    const faq = await this.faqService.createFAQ(dto);
+    // TODO: Get user info from JWT token when auth is implemented
+    const faq = await this.faqService.createFAQ(dto, 'admin', 'admin@example.com');
     return new AdminSuccessResponse('FAQ created successfully', faq);
   }
 
@@ -61,7 +62,8 @@ export class FAQController {
   @Put(':id')
   @UsePipes(new ValidationPipe({ whitelist: true }))
   async updateFAQ(@Param('id') id: string, @Body() dto: UpdateFAQDto) {
-    const faq = await this.faqService.updateFAQ(id, dto);
+    // TODO: Get user info from JWT token when auth is implemented
+    const faq = await this.faqService.updateFAQ(id, dto, 'admin', 'admin@example.com');
     return new AdminSuccessResponse('FAQ updated successfully', faq);
   }
 
@@ -70,7 +72,8 @@ export class FAQController {
    */
   @Delete(':id')
   async deleteFAQ(@Param('id') id: string) {
-    const result = await this.faqService.deleteFAQ(id);
+    // TODO: Get user info from JWT token when auth is implemented
+    const result = await this.faqService.deleteFAQ(id, 'admin', 'admin@example.com');
     return new AdminSuccessResponse('FAQ deleted successfully', result);
   }
 
@@ -80,7 +83,8 @@ export class FAQController {
   @Patch(':id/status')
   @UsePipes(new ValidationPipe({ whitelist: true }))
   async updateFAQStatus(@Param('id') id: string, @Body() dto: UpdateFAQStatusDto) {
-    const result = await this.faqService.updateFAQStatus(id, dto);
+    // TODO: Get user info from JWT token when auth is implemented
+    const result = await this.faqService.updateFAQStatus(id, dto, 'admin', 'admin@example.com');
     return new AdminSuccessResponse('FAQ status updated successfully', result);
   }
 } 

@@ -54,7 +54,8 @@ export class ProductController {
   @Post()
   @UsePipes(new ValidationPipe({ whitelist: true }))
   async createProduct(@Body() dto: CreateProductDto) {
-    const product = await this.productService.createProduct(dto);
+    // TODO: Get user info from JWT token when auth is implemented
+    const product = await this.productService.createProduct(dto, 'admin', 'admin@example.com');
     return new AdminSuccessResponse('Product created successfully', product);
   }
 
@@ -64,7 +65,8 @@ export class ProductController {
   @Put(':id')
   @UsePipes(new ValidationPipe({ whitelist: true }))
   async updateProduct(@Param('id') id: string, @Body() dto: UpdateProductDto) {
-    const product = await this.productService.updateProduct(id, dto);
+    // TODO: Get user info from JWT token when auth is implemented
+    const product = await this.productService.updateProduct(id, dto, 'admin', 'admin@example.com');
     return new AdminSuccessResponse('Product updated successfully', product);
   }
 
@@ -73,7 +75,8 @@ export class ProductController {
    */
   @Delete(':id')
   async deleteProduct(@Param('id') id: string) {
-    const result = await this.productService.deleteProduct(id);
+    // TODO: Get user info from JWT token when auth is implemented
+    const result = await this.productService.deleteProduct(id, 'admin', 'admin@example.com');
     return new AdminSuccessResponse('Product deleted successfully', result);
   }
 
@@ -98,7 +101,8 @@ export class ProductController {
   @Patch(':id/status')
   @UsePipes(new ValidationPipe({ whitelist: true }))
   async updateProductStatus(@Param('id') id: string, @Body() dto: UpdateProductStatusDto) {
-    const result = await this.productService.updateProductStatus(id, dto);
+    // TODO: Get user info from JWT token when auth is implemented
+    const result = await this.productService.updateProductStatus(id, dto, 'admin', 'admin@example.com');
     return new AdminSuccessResponse('Product status updated successfully', result);
   }
 
