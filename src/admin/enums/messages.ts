@@ -12,4 +12,12 @@ export enum AdminMessages {
   ABOUT_US_UPDATED_SUCCESS = 'About Us updated successfully',
   PRIVACY_POLICY_FETCHED_SUCCESS = 'Privacy Policy fetched successfully',
   PRIVACY_POLICY_UPDATED_SUCCESS = 'Privacy Policy updated successfully',
+  PRODUCTS_FETCHED_SUCCESS = 'Products fetched successfully',
+  PRODUCT_FETCHED_SUCCESS = 'Product fetched successfully',
+  PRODUCT_CREATED_SUCCESS = 'Product created successfully',
+  PRODUCT_UPDATED_SUCCESS = 'Product updated successfully',
+  PRODUCT_DELETED_SUCCESS = 'Product deleted successfully',
+  PRODUCT_IMAGE_UPLOADED_SUCCESS = 'Product image uploaded successfully',
+  PRODUCT_STATUS_UPDATED_SUCCESS = 'Product status updated successfully',
+  PRODUCT_IMAGE_REMOVED_SUCCESS = 'Product image removed successfully',
 }

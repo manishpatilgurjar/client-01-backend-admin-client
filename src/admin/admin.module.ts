@@ -8,6 +8,8 @@ import { AboutUsController } from './controllers/about-us.controller';
 import { AboutUsService } from './services/about-us.service';
 import { PrivacyPolicyController } from './controllers/privacy-policy.controller';
 import { PrivacyPolicyService } from './services/privacy-policy.service';
+import { ProductController } from './controllers/product.controller';
+import { ProductService } from './services/product.service';
 import { S3UploadService } from '../common/services/s3-upload.service';
 
 /**
@@ -15,12 +17,12 @@ import { S3UploadService } from '../common/services/s3-upload.service';
  * Import this module in AppModule to enable admin APIs.
  */
 @Module({
-  controllers: [AuthController, ProfileController, AboutUsController, PrivacyPolicyController],
-  providers: [AuthService, MailService, AboutUsService, PrivacyPolicyService, S3UploadService],
+  controllers: [AuthController, ProfileController, AboutUsController, PrivacyPolicyController, ProductController],
+  providers: [AuthService, MailService, AboutUsService, PrivacyPolicyService, ProductService, S3UploadService],
   exports: [AuthService],
 })
 export class AdminModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(AdminAuthMiddleware).forRoutes('admin/profile', 'admin/about-us', 'admin/privacy-policy');
+    consumer.apply(AdminAuthMiddleware).forRoutes('admin/profile', 'admin/about-us', 'admin/privacy-policy', 'admin/products');
   }
 } 
