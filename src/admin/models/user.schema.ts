@@ -7,11 +7,24 @@ export interface AdminUser extends Document {
   email: string;
   password: string;
   role: string;
+  firstName?: string;
+  lastName?: string;
   profilePic?: string;
   deviceData?: string;
-  fullName?: string;
   phone?: string;
-  address?: string;
+  location?: string;
+  bio?: string;
+  lastLogin?: Date;
+  isActive: boolean;
+  permissions: string[];
+  preferences: {
+    theme: string;
+    language: string;
+    notifications: {
+      email: boolean;
+      push: boolean;
+    };
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -21,11 +34,24 @@ const AdminUserSchema = new Schema<AdminUser>({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   role: { type: String, default: 'admin', immutable: true },
+  firstName: { type: String },
+  lastName: { type: String },
   profilePic: { type: String },
   deviceData: { type: String },
-  fullName: { type: String },
   phone: { type: String },
-  address: { type: String },
+  location: { type: String },
+  bio: { type: String },
+  lastLogin: { type: Date },
+  isActive: { type: Boolean, default: true },
+  permissions: { type: [String], default: ['read', 'write', 'delete', 'admin'] },
+  preferences: {
+    theme: { type: String, default: 'light' },
+    language: { type: String, default: 'en' },
+    notifications: {
+      email: { type: Boolean, default: true },
+      push: { type: Boolean, default: false }
+    }
+  },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });

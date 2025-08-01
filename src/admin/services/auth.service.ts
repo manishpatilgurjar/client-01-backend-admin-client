@@ -77,9 +77,10 @@ export class AuthService {
         email: user.email,
         role: user.role,
         profilePic: user.profilePic,
-        fullName: user.fullName,
+        firstName: user.firstName,
+        lastName: user.lastName,
         phone: user.phone,
-        address: user.address,
+        location: user.location,
       },
     };
   }
@@ -120,9 +121,10 @@ export class AuthService {
         email: user.email,
         role: user.role,
         profilePic: user.profilePic,
-        fullName: user.fullName,
+        firstName: user.firstName,
+        lastName: user.lastName,
         phone: user.phone,
-        address: user.address,
+        location: user.location,
       },
     };
   }

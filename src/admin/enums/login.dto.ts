@@ -34,9 +34,10 @@ export class AdminLoginResponseDto {
     email: string;
     role: string;
     profilePic?: string;
-    fullName?: string;
+    firstName?: string;
+    lastName?: string;
     phone?: string;
-    address?: string;
+    location?: string;
   };
 }
 

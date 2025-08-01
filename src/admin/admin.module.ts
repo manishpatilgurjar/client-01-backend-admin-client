@@ -3,6 +3,7 @@ import { AuthController } from './controllers/auth.controller';
 import { AuthService } from './services/auth.service';
 import { MailService } from '../mail/mail.service';
 import { ProfileController } from './controllers/profile.controller';
+import { ProfileService } from './services/profile.service';
 import { AdminAuthMiddleware } from './middleware/auth.middleware';
 import { AboutUsController } from './controllers/about-us.controller';
 import { AboutUsService } from './services/about-us.service';
@@ -25,11 +26,11 @@ import { S3UploadService } from '../common/services/s3-upload.service';
  */
 @Module({
   controllers: [AuthController, ProfileController, AboutUsController, PrivacyPolicyController, ProductController, FAQController, IndexPageController, DashboardController],
-  providers: [AuthService, MailService, AboutUsService, PrivacyPolicyService, ProductService, FAQService, IndexPageService, DashboardService, ActivityLogService, S3UploadService],
+  providers: [AuthService, ProfileService, MailService, AboutUsService, PrivacyPolicyService, ProductService, FAQService, IndexPageService, DashboardService, ActivityLogService, S3UploadService],
   exports: [AuthService],
 })
 export class AdminModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(AdminAuthMiddleware).forRoutes('admin/profile', 'admin/about-us', 'admin/privacy-policy', 'admin/products', 'admin/faqs', 'admin/index-page', 'admin/dashboard');
+    consumer.apply(AdminAuthMiddleware).forRoutes('admin/profile', 'admin/users/profile', 'admin/about-us', 'admin/privacy-policy', 'admin/products', 'admin/faqs', 'admin/index-page', 'admin/dashboard');
   }
 } 

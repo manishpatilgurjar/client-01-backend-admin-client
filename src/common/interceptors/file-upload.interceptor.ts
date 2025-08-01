@@ -24,7 +24,7 @@ export class FileUploadInterceptor implements NestInterceptor {
         cb(null, false);
       }
     },
-  }).single('image');
+  }).single('file');
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest();

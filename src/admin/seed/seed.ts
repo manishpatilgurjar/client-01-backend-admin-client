@@ -16,9 +16,10 @@ async function seedAdmin() {
       password: 'admin123',
       profilePic: 'https://example.com/profile-pic.png',
       deviceData: 'Windows 10, Chrome 120',
-      fullName: 'Default Admin',
+      firstName: 'Default',
+      lastName: 'Admin',
       phone: '+1234567890',
-      address: '123 Admin Street, Admin City',
+      location: '123 Admin Street, Admin City',
     });
     await admin.save();
     console.log('Default admin user created.');

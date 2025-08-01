@@ -37,4 +37,13 @@ export enum AdminMessages {
   SECTION_ALREADY_EXISTS = 'Section already exists',
   PRODUCT_NOT_FOUND = 'Product not found',
   DASHBOARD_DATA_RETRIEVED_SUCCESS = 'Dashboard data retrieved successfully',
+  PROFILE_RETRIEVED_SUCCESS = 'Profile retrieved successfully',
+  PROFILE_UPDATED_SUCCESS = 'Profile updated successfully',
+  AVATAR_UPLOADED_SUCCESS = 'Avatar uploaded successfully',
+  PASSWORD_CHANGE_OTP_SENT = 'OTP sent to your email for password change verification',
+  PASSWORD_CHANGED_SUCCESS = 'Password changed successfully',
+  PASSWORD_RESET_REQUESTED = 'Password reset link sent to your email',
+  PASSWORD_RESET_SUCCESS = 'Password reset successfully',
+  PREFERENCES_UPDATED_SUCCESS = 'Preferences updated successfully',
+  USER_ACTIVITY_RETRIEVED_SUCCESS = 'User activity retrieved successfully',
 }
