@@ -15,7 +15,8 @@ import {
   ContactFormDto, 
   UpdateEnquiryDto, 
   EnquiryQueryDto,
-  AdminReplyDto
+  AdminReplyDto,
+  ExportEnquiriesDto
 } from '../enums/enquiry.dto';
 import { EnquiryService } from '../services/enquiry.service';
 import { AdminSuccessResponse } from '../enums/response';
@@ -34,6 +35,37 @@ export class EnquiryController {
   async getAllEnquiries(@Query() query: EnquiryQueryDto) {
     const result = await this.enquiryService.getAllEnquiries(query);
     return new AdminSuccessResponse(AdminMessages.ENQUIRIES_FETCHED_SUCCESS, result);
+  }
+
+  /**
+   * Get enquiry statistics
+   * GET /admin/enquiries/stats/overview
+   */
+  @Get('stats/overview')
+  async getEnquiryStats() {
+    const stats = await this.enquiryService.getEnquiryStats();
+    return new AdminSuccessResponse('Enquiry statistics retrieved successfully', stats);
+  }
+
+  /**
+   * Get filter options for frontend
+   * GET /admin/enquiries/filter-options
+   */
+  @Get('filter-options')
+  async getFilterOptions() {
+    const options = await this.enquiryService.getFilterOptions();
+    return new AdminSuccessResponse('Filter options retrieved successfully', options);
+  }
+
+  /**
+   * Export enquiries for CSV generation
+   * POST /admin/enquiries/export
+   */
+  @Post('export')
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  async exportEnquiries(@Body() dto: ExportEnquiriesDto) {
+    const result = await this.enquiryService.exportEnquiries(dto);
+    return new AdminSuccessResponse('Enquiries exported successfully', result);
   }
 
   /**
@@ -87,25 +119,5 @@ export class EnquiryController {
   async deleteEnquiry(@Param('id') id: string) {
     const result = await this.enquiryService.deleteEnquiry(id);
     return new AdminSuccessResponse(result.message);
-  }
-
-  /**
-   * Get enquiry statistics
-   * GET /admin/enquiries/stats/overview
-   */
-  @Get('stats/overview')
-  async getEnquiryStats() {
-    const stats = await this.enquiryService.getEnquiryStats();
-    return new AdminSuccessResponse('Enquiry statistics retrieved successfully', stats);
-  }
-
-  /**
-   * Get filter options for frontend
-   * GET /admin/enquiries/filter-options
-   */
-  @Get('filter-options')
-  async getFilterOptions() {
-    const options = await this.enquiryService.getFilterOptions();
-    return new AdminSuccessResponse('Filter options retrieved successfully', options);
   }
 } 

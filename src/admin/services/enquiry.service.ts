@@ -505,4 +505,135 @@ export class EnquiryService {
       }
     };
   }
+
+  /**
+   * Export enquiries for CSV generation (admin API)
+   */
+  async exportEnquiries(dto: any): Promise<{
+    enquiries: {
+      fullName: string;
+      email: string;
+      phone: string;
+      message: string;
+      contactDate: string;
+    }[];
+    totalCount: number;
+    exportDate: string;
+    filters: any;
+  }> {
+    // Build filter conditions
+    const filter: any = {};
+
+    // Date filter logic
+    if (dto.dateFilter) {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      
+      switch (dto.dateFilter) {
+        case 'today':
+          filter.createdAt = { $gte: today };
+          break;
+        case 'yesterday':
+          const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+          filter.createdAt = { 
+            $gte: yesterday, 
+            $lt: today 
+          };
+          break;
+        case 'last7days':
+          const last7Days = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+          filter.createdAt = { $gte: last7Days };
+          break;
+        case 'last30days':
+          const last30Days = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+          filter.createdAt = { $gte: last30Days };
+          break;
+        case 'thisMonth':
+          const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+          filter.createdAt = { $gte: thisMonthStart };
+          break;
+        case 'lastMonth':
+          const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+          const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+          filter.createdAt = { 
+            $gte: lastMonthStart, 
+            $lte: lastMonthEnd 
+          };
+          break;
+        case 'thisYear':
+          const thisYearStart = new Date(now.getFullYear(), 0, 1);
+          filter.createdAt = { $gte: thisYearStart };
+          break;
+        case 'custom':
+          if (dto.startDate || dto.endDate) {
+            filter.createdAt = {};
+            if (dto.startDate) {
+              filter.createdAt.$gte = new Date(dto.startDate);
+            }
+            if (dto.endDate) {
+              const endDate = new Date(dto.endDate);
+              endDate.setHours(23, 59, 59, 999);
+              filter.createdAt.$lte = endDate;
+            }
+          }
+          break;
+      }
+    }
+
+    // Status filter
+    if (dto.status) {
+      filter.status = dto.status;
+    }
+
+    // Category filter
+    if (dto.category) {
+      filter.inquiryCategory = dto.category;
+    }
+
+    // Starred filter
+    if (dto.starred !== undefined) {
+      filter.isStarred = dto.starred;
+    }
+
+    // Search filter
+    if (dto.search) {
+      filter.$or = [
+        { fullName: { $regex: dto.search, $options: 'i' } },
+        { email: { $regex: dto.search, $options: 'i' } },
+        { phone: { $regex: dto.search, $options: 'i' } },
+        { subject: { $regex: dto.search, $options: 'i' } },
+        { message: { $regex: dto.search, $options: 'i' } }
+      ];
+    }
+
+    // Get all enquiries matching the filter (no pagination for export)
+    const enquiries = await EnquiryModel.find(filter)
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // Transform to export format
+    const exportData = enquiries.map(enquiry => ({
+      fullName: enquiry.fullName || '',
+      email: enquiry.email || '',
+      phone: enquiry.phone || '',
+      message: enquiry.message || '',
+      contactDate: enquiry.createdAt ? enquiry.createdAt.toISOString().split('T')[0] : ''
+    }));
+
+    // Log export activity
+    await this.activityLogService.logActivity({
+      action: 'Exported Enquiries',
+      entity: 'Enquiry',
+      entityName: `Export - ${exportData.length} enquiries`,
+      details: `Exported ${exportData.length} enquiries with filters: ${JSON.stringify(dto)}`,
+      type: 'system'
+    });
+
+    return {
+      enquiries: exportData,
+      totalCount: exportData.length,
+      exportDate: new Date().toISOString(),
+      filters: dto
+    };
+  }
 } 

@@ -109,6 +109,63 @@ export class EnquiryQueryDto {
   hasAdminNotes?: boolean;
 }
 
+// Export Enquiries DTO
+export class ExportEnquiriesDto {
+  @IsEnum(['today', 'yesterday', 'last7days', 'last30days', 'thisMonth', 'lastMonth', 'thisYear', 'custom'])
+  @IsOptional()
+  dateFilter?: string;
+
+  @IsString()
+  @IsOptional()
+  startDate?: string;
+
+  @IsString()
+  @IsOptional()
+  endDate?: string;
+
+  @IsEnum(['new', 'in-progress', 'replied', 'closed'])
+  @IsOptional()
+  status?: string;
+
+  @IsEnum(['General Inquiry', 'Product Inquiry', 'Technical Support', 'Sales Inquiry', 'Partnership', 'Other'])
+  @IsOptional()
+  category?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  starred?: boolean;
+
+  @IsString()
+  @IsOptional()
+  search?: string;
+}
+
+// Export Response DTO
+export class ExportEnquiriesResponseDto {
+  success: boolean;
+  message: string;
+  data: {
+    enquiries: {
+      fullName: string;
+      email: string;
+      phone: string;
+      message: string;
+      contactDate: string;
+    }[];
+    totalCount: number;
+    exportDate: string;
+    filters: {
+      dateFilter?: string;
+      startDate?: string;
+      endDate?: string;
+      status?: string;
+      category?: string;
+      starred?: boolean;
+      search?: string;
+    };
+  };
+}
+
 // Response DTOs
 export class EnquiryResponseDto {
   id: string;
