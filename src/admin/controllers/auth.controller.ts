@@ -1,6 +1,6 @@
 import { Controller, Post, Body, HttpCode } from '@nestjs/common';
 import { AuthService } from '../services/auth.service';
-import { AdminLoginDto, RefreshTokenRequestDto, LogoutRequestDto } from '../enums/login.dto';
+import { AdminLoginDto, RefreshTokenRequestDto, LogoutRequestDto, AdminLoginWithOTPDto } from '../enums/login.dto';
 import { AdminSuccessResponse, AdminErrorResponse } from '../enums/response';
 import { AdminMessages } from '../enums/messages';
 // import { ResponseCodes } from 'src/enum/responseCodes';
@@ -60,5 +60,19 @@ export class AuthController {
   async logout(@Body() dto: LogoutRequestDto): Promise<AdminSuccessResponse> {
     const result = await this.authService.logout(dto.accessToken);
     return new AdminSuccessResponse(result.message, {});
+  }
+
+  /**
+   * POST /admin/auth/verify-2fa
+   * Verifies 2FA OTP and completes login process.
+   * @param dto - AdminLoginWithOTPDto containing the OTP
+   * @param tempToken - Temporary token from step 1 login
+   * @returns AdminSuccessResponse with tokens and user info
+   */
+  @Post('verify-2fa')
+  @HttpCode(200)
+  async verify2FA(@Body() dto: AdminLoginWithOTPDto, @Body('tempToken') tempToken: string): Promise<AdminSuccessResponse> {
+    const result = await this.authService.verify2FAAndLogin(dto, tempToken);
+    return new AdminSuccessResponse(AdminMessages.LOGIN_SUCCESS, result);
   }
 } 

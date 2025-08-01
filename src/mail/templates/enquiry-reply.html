@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reply to Your Enquiry</title>
+  <style>
+    body {
+      background: linear-gradient(135deg, #e3f2fd 0%, #f6f8fa 100%);
+      font-family: 'Inter', Arial, sans-serif;
+      color: #222;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(25, 118, 210, 0.10), 0 1.5px 6px rgba(0,0,0,0.04);
+      padding: 36px 28px;
+      border: 1.5px solid #e3f2fd;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    .logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
+      margin-right: 14px;
+      box-shadow: 0 2px 8px rgba(25, 118, 210, 0.10);
+      object-fit: cover;
+    }
+    .title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #1976d2;
+      letter-spacing: 0.5px;
+    }
+    .reply-badge {
+      background: linear-gradient(90deg, #4caf50 60%, #66bb6a 100%);
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      display: inline-block;
+      margin-bottom: 16px;
+    }
+    .original-enquiry {
+      background: #f8f9fa;
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .original-title {
+      color: #495057;
+      font-weight: 600;
+      margin-bottom: 12px;
+      font-size: 1rem;
+    }
+    .original-subject {
+      color: #1976d2;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .original-message {
+      background: #fff;
+      border: 1px solid #dee2e6;
+      border-radius: 6px;
+      padding: 12px;
+      color: #495057;
+      font-style: italic;
+      line-height: 1.5;
+    }
+    .admin-reply {
+      background: #e8f5e8;
+      border: 1px solid #c8e6c9;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .reply-title {
+      color: #2e7d32;
+      font-weight: 600;
+      margin-bottom: 12px;
+      font-size: 1rem;
+    }
+    .reply-message {
+      color: #222;
+      line-height: 1.6;
+      font-size: 1rem;
+    }
+    .admin-info {
+      background: #fff3e0;
+      border: 1px solid #ffcc02;
+      border-radius: 6px;
+      padding: 12px;
+      margin: 16px 0;
+    }
+    .admin-info strong {
+      color: #f57c00;
+    }
+    .footer {
+      margin-top: 36px;
+      font-size: 0.97rem;
+      color: #90a4ae;
+      text-align: center;
+    }
+    .contact-info {
+      background: #e3f2fd;
+      border: 1px solid #bbdefb;
+      border-radius: 6px;
+      padding: 12px;
+      margin: 16px 0;
+    }
+    .contact-info strong {
+      color: #1976d2;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="https://ecomm-bucket-mp.s3.ap-south-1.amazonaws.com/avatars/1754074871722-IMG-20250619-WA0000.jpg" alt="MedoScopic Logo" class="logo">
+      <div class="title">MedoScopic Admin</div>
+    </div>
+    
+    <div style="text-align: center; margin-bottom: 20px;">
+      <span class="reply-badge">💬 Reply to Your Enquiry</span>
+    </div>
+    
+    <h2 style="margin-bottom: 8px; color: #1976d2; text-align: center;">Response to Your Inquiry</h2>
+    <p style="margin-bottom: 18px; color: #444; text-align: center;">Thank you for contacting MedoScopic. Here is our response to your enquiry.</p>
+    
+    <div class="original-enquiry">
+      <div class="original-title">📋 Your Original Enquiry:</div>
+      <div class="original-subject">{{originalSubject}}</div>
+      <div class="original-message">{{originalMessage}}</div>
+    </div>
+    
+    <div class="admin-reply">
+      <div class="reply-title">💬 Our Response:</div>
+      <div class="reply-message">{{adminReply}}</div>
+    </div>
+    
+    <div class="admin-info">
+      <strong>👤 Responded by:</strong> {{adminName}}<br>
+      <strong>📅 Response Date:</strong> {{replyDate}}
+    </div>
+    
+    <div class="contact-info">
+      <strong>📞 Need Further Assistance?</strong><br>
+      If you have any additional questions or need clarification, please don't hesitate to contact us:<br>
+      • Email: support@medoscopic.com<br>
+      • Phone: +1 (555) 123-4567<br>
+      • Website: www.medoscopic.com
+    </div>
+    
+    <div class="footer">
+      &copy; MedoScopic Admin Panel<br />
+      This is an automated response. Please do not reply to this email.
+    </div>
+  </div>
+</body>
+</html> 

@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { AdminMessages } from '../enums/messages';
 import { AdminUserModel } from '../models/user.schema';
 import { PasswordResetModel } from '../models/password-reset.schema';
 import { PasswordHistoryModel } from '../models/password-history.schema';
@@ -8,10 +9,12 @@ import {
   ChangePasswordDto, 
   RequestPasswordResetDto, 
   ResetPasswordDto, 
-  VerifyOTPDto,
-  UpdatePreferencesDto,
-  UserProfileResponse,
-  UserActivityResponse
+  VerifyOTPDto, 
+  UpdatePreferencesDto, 
+  EnableTwoFactorDto,
+  DisableTwoFactorDto,
+  UserProfileResponse, 
+  UserActivityResponse 
 } from '../enums/profile.dto';
 import { ActivityLogService } from './activity-log.service';
 import { S3UploadService } from '../../common/services/s3-upload.service';
@@ -65,6 +68,7 @@ export class ProfileService {
         timeAgo: this.getTimeAgo(lastPasswordChange.changedAt)
       } : undefined,
       isActive: user.isActive,
+      twoFactorEnabled: user.twoFactorEnabled,
       permissions: user.permissions,
       preferences: user.preferences
     };
@@ -472,6 +476,140 @@ export class ProfileService {
   async destroyAllSessions(userId: string) {
     const result = await RefreshTokenModel.deleteMany({ userId });
     return result;
+  }
+
+  /**
+   * Enable 2FA for a user
+   */
+  async enableTwoFactor(userId: string, dto: EnableTwoFactorDto, userEmail?: string): Promise<{ message: string }> {
+    const user = await AdminUserModel.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Verify OTP
+    const passwordReset = await PasswordResetModel.findOne({
+      email: userEmail || user.email,
+      otp: dto.otp,
+      otpExpiresAt: { $gt: new Date() },
+      isUsed: false
+    });
+
+    if (!passwordReset) {
+      throw new BadRequestException('Invalid or expired OTP');
+    }
+
+    // Mark OTP as used
+    passwordReset.isUsed = true;
+    await passwordReset.save();
+
+    // Generate 2FA secret
+    const twoFactorSecret = crypto.randomBytes(32).toString('hex');
+
+    // Enable 2FA
+    user.twoFactorEnabled = true;
+    user.twoFactorSecret = twoFactorSecret;
+    await user.save();
+
+    // Send 2FA enabled confirmation email
+     this.mailService.send2FAStatusChangeEmail(
+      userEmail || user.email, 
+      true, 
+      new Date()
+    );
+
+    // Log the activity
+    await this.activityLogService.logActivity({
+      action: '2FA Enabled',
+      entity: 'User',
+      entityId: (user._id as any).toString(),
+      entityName: `${user.firstName} ${user.lastName}`,
+      userId: (user._id as any).toString(),
+      userEmail: userEmail || user.email,
+      type: 'update'
+    });
+
+    return { message: AdminMessages.TWO_FACTOR_ENABLED_SUCCESS };
+  }
+
+  /**
+   * Disable 2FA for a user
+   */
+  async disableTwoFactor(userId: string, dto: DisableTwoFactorDto, userEmail?: string): Promise<{ message: string }> {
+    const user = await AdminUserModel.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Verify OTP
+    const passwordReset = await PasswordResetModel.findOne({
+      email: userEmail || user.email,
+      otp: dto.otp,
+      otpExpiresAt: { $gt: new Date() },
+      isUsed: false
+    });
+
+    if (!passwordReset) {
+      throw new BadRequestException('Invalid or expired OTP');
+    }
+
+    // Mark OTP as used
+    passwordReset.isUsed = true;
+    await passwordReset.save();
+
+    // Disable 2FA
+    user.twoFactorEnabled = false;
+    user.twoFactorSecret = undefined;
+    await user.save();
+
+    // Send 2FA disabled confirmation email
+     this.mailService.send2FAStatusChangeEmail(
+      userEmail || user.email, 
+      false, 
+      new Date()
+    );
+
+    // Log the activity
+    await this.activityLogService.logActivity({
+      action: '2FA Disabled',
+      entity: 'User',
+      entityId: (user._id as any).toString(),
+      entityName: `${user.firstName} ${user.lastName}`,
+      userId: (user._id as any).toString(),
+      userEmail: userEmail || user.email,
+      type: 'update'
+    });
+
+    return { message: AdminMessages.TWO_FACTOR_DISABLED_SUCCESS };
+  }
+
+  /**
+   * Request 2FA setup (send OTP for enabling/disabling)
+   */
+  async requestTwoFactorSetup(userId: string, userEmail?: string): Promise<{ message: string }> {
+    const user = await AdminUserModel.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Generate OTP
+    const otp = this.generateOTP();
+    const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    // Save OTP
+    await PasswordResetModel.create({
+      email: userEmail || user.email,
+      token: crypto.randomBytes(32).toString('hex'),
+      otp,
+      otpExpiresAt,
+      tokenExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
+      isUsed: false
+    });
+
+    // Send 2FA setup OTP email
+     this.mailService.send2FASetupEmail(userEmail || user.email, otp, '2FA Setup');
+
+    return { message: AdminMessages.TWO_FACTOR_SETUP_OTP_SENT };
   }
 
   /**

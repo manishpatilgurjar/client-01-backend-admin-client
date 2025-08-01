@@ -1,10 +1,12 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { AdminUserModel } from '../models/user.schema';
-import { AdminLoginDto, AdminLoginResponseDto } from '../enums/login.dto';
+import { AdminLoginDto, AdminLoginResponseDto, AdminLoginWithOTPDto, AdminLoginStep1ResponseDto } from '../enums/login.dto';
 import { AdminErrorResponse } from '../enums/response';
 import { RefreshTokenModel } from '../models/refresh-token.schema';
+import { PasswordResetModel } from '../models/password-reset.schema';
 import { MailService } from '../../mail/mail.service';
 import { AdminMessages } from '../enums/messages';
+import * as crypto from 'crypto';
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 
@@ -13,16 +15,14 @@ export class AuthService {
   constructor(private readonly mailService: MailService) {}
 
   /**
-   * Handles admin login:
+   * Handles admin login with 2FA support:
    * 1. Finds the admin user by email only.
    * 2. Checks the password using bcrypt.
-   * 3. Generates access and refresh JWT tokens.
-   * 4. Saves the refresh token in the database for future validation.
-   * 5. Sends a login notification email to the admin.
-   * 6. Returns tokens and user info on success.
+   * 3. If 2FA is enabled, sends OTP and returns temp token with stored login data.
+   * 4. If 2FA is disabled, proceeds with normal login.
    * Throws UnauthorizedException on failure.
    */
-  async login(dto: AdminLoginDto): Promise<AdminLoginResponseDto> {
+  async login(dto: AdminLoginDto): Promise<AdminLoginResponseDto | AdminLoginStep1ResponseDto> {
     // 1. Find the admin user by email only
     const user = await AdminUserModel.findOne({
       email: dto.email,
@@ -38,51 +38,50 @@ export class AuthService {
       // If password does not match, throw error
       throw new UnauthorizedException(AdminMessages.LOGIN_INVALID_CREDENTIALS);
     }
-    // 3. Generate refresh token (long-lived, e.g. 7 days)
-    const refreshToken: string = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_REFRESH_SECRET || 'refreshsecret',
-      { expiresIn: '7d' }
-    );
-    // 4. Save refresh token in DB for future validation and revocation
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
-    const refreshTokenDoc = await RefreshTokenModel.create({
-      userId: user._id, // Reference to the admin user
-      token: refreshToken, // The refresh token string
-      expiresAt, // Expiry date for the refresh token
-      deviceData: dto.deviceData, // Device info from login request
-      ipAddress: dto.ipAddress, // IP address from login request
-      location: dto.location, // Location coordinates from login request
-    });
-    // 5. Generate access token (short-lived, e.g. 15 minutes) with g_id
-    const accessToken: string = jwt.sign(
-      { id: user._id, role: user.role, g_id: refreshTokenDoc._id },
-      process.env.JWT_SECRET || 'secret',
-      { expiresIn: '15m' }
-    );
-    // 6. Send login notification email to the admin
-     this.mailService.sendLoginNotification(
-      user.email,
-      dto.deviceData || {},
-      dto.location,
-      dto.ipAddress
-    );
-    // 7. Return tokens and user info
-    return {
-      accessToken,
-      refreshToken,
-      user: {
-        id: String(user._id),
-        username: user.username,
+
+    // 3. Check if 2FA is enabled
+    if (user.twoFactorEnabled) {
+      // Generate OTP for 2FA
+      const otp = this.generateOTP();
+      const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+      // Store login data temporarily with OTP for later use
+      const loginData = {
+        deviceData: dto.deviceData || {},
+        ipAddress: dto.ipAddress || '',
+        location: dto.location
+      };
+
+      // Save OTP with login data
+      await PasswordResetModel.create({
         email: user.email,
-        role: user.role,
-        profilePic: user.profilePic,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        phone: user.phone,
-        location: user.location,
-      },
-    };
+        token: crypto.randomBytes(32).toString('hex'),
+        otp,
+        otpExpiresAt,
+        tokenExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
+        isUsed: false,
+        loginData: loginData // Store login data for later use
+      });
+
+      // Send OTP email for 2FA login
+       this.mailService.sendOTPEmail(user.email, otp, 'Login Verification');
+
+      // Generate temporary token for 2FA verification
+      const tempToken = jwt.sign(
+        { id: user._id, role: user.role, requires2FA: true },
+        process.env.JWT_SECRET || 'secret',
+        { expiresIn: '10m' }
+      );
+
+      return {
+        requiresOTP: true,
+        message: 'OTP sent to your email for two-factor authentication',
+        tempToken
+      };
+    }
+
+    // 4. Proceed with normal login (2FA disabled)
+    return this.completeLogin(user, dto);
   }
 
   /**
@@ -154,5 +153,118 @@ export class AuthService {
       // This prevents token enumeration attacks
       return { message: AdminMessages.LOGOUT_SUCCESS };
     }
+  }
+
+  /**
+   * Verify 2FA OTP and complete login
+   */
+  async verify2FAAndLogin(dto: AdminLoginWithOTPDto, tempToken: string): Promise<AdminLoginResponseDto> {
+    try {
+      // Decode temp token
+      const decoded = jwt.verify(tempToken, process.env.JWT_SECRET || 'secret') as any;
+      
+      if (!decoded.requires2FA) {
+        throw new UnauthorizedException('Invalid temporary token');
+      }
+
+      // Find user
+      const user = await AdminUserModel.findById(decoded.id);
+      if (!user) {
+        throw new UnauthorizedException(AdminMessages.LOGIN_USER_NOT_FOUND);
+      }
+
+      // Verify OTP
+      const passwordReset = await PasswordResetModel.findOne({
+        email: user.email,
+        otp: dto.otp,
+        otpExpiresAt: { $gt: new Date() },
+        isUsed: false
+      });
+
+      if (!passwordReset) {
+        throw new BadRequestException('Invalid or expired OTP');
+      }
+
+      // Extract stored login data
+      const loginData = passwordReset.loginData || {
+        deviceData: {},
+        ipAddress: '',
+        location: undefined
+      };
+
+      // Mark OTP as used
+      passwordReset.isUsed = true;
+      await passwordReset.save();
+
+      // Proceed with normal login flow using stored login data
+      return this.completeLogin(user, loginData);
+    } catch (error) {
+      if (error instanceof UnauthorizedException || error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new UnauthorizedException('Invalid temporary token');
+    }
+  }
+
+  /**
+   * Complete login process (extracted from original login method)
+   */
+  private async completeLogin(user: any, dto: any): Promise<AdminLoginResponseDto> {
+    // Generate refresh token (long-lived, e.g. 7 days)
+    const refreshToken: string = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_REFRESH_SECRET || 'refreshsecret',
+      { expiresIn: '7d' }
+    );
+
+    // Save refresh token in DB for future validation and revocation
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
+    const refreshTokenDoc = await RefreshTokenModel.create({
+      userId: user._id,
+      token: refreshToken,
+      expiresAt,
+      deviceData: dto.deviceData,
+      ipAddress: dto.ipAddress,
+      location: dto.location,
+    });
+
+    // Generate access token (short-lived, e.g. 15 minutes) with g_id
+    const accessToken: string = jwt.sign(
+      { id: user._id, role: user.role, g_id: refreshTokenDoc._id },
+      process.env.JWT_SECRET || 'secret',
+      { expiresIn: '15m' }
+    );
+
+    // Send login notification email to the admin
+    this.mailService.sendLoginNotification(
+      user.email,
+      dto.deviceData || {},
+      dto.location,
+      dto.ipAddress
+    );
+
+    // Return tokens and user info
+    return {
+      accessToken,
+      refreshToken,
+      user: {
+        id: String(user._id),
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        profilePic: user.profilePic,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phone: user.phone,
+        location: user.location,
+      },
+    };
+  }
+
+  /**
+   * Generate a 6-digit OTP
+   */
+  private generateOTP(): string {
+    return Math.floor(100000 + Math.random() * 900000).toString();
   }
 } 

@@ -7,6 +7,14 @@ export interface PasswordReset extends Document {
   otpExpiresAt: Date;
   tokenExpiresAt: Date;
   isUsed: boolean;
+  loginData?: {
+    deviceData?: Record<string, any>;
+    ipAddress?: string;
+    location?: {
+      latitude: number;
+      longitude: number;
+    };
+  };
   createdAt: Date;
 }
 
@@ -38,6 +46,14 @@ const PasswordResetSchema = new Schema<PasswordReset>({
   isUsed: { 
     type: Boolean, 
     default: false 
+  },
+  loginData: {
+    deviceData: { type: Schema.Types.Mixed },
+    ipAddress: { type: String },
+    location: {
+      latitude: { type: Number },
+      longitude: { type: Number }
+    }
   },
   createdAt: { 
     type: Date, 

@@ -18,8 +18,10 @@ import {
   ChangePasswordDto, 
   RequestPasswordResetDto, 
   ResetPasswordDto, 
-  VerifyOTPDto,
-  UpdatePreferencesDto
+  VerifyOTPDto, 
+  UpdatePreferencesDto,
+  EnableTwoFactorDto,
+  DisableTwoFactorDto
 } from '../enums/profile.dto';
 import { AdminSuccessResponse } from '../enums/response';
 import { FileUploadInterceptor } from '../../common/interceptors/file-upload.interceptor';
@@ -181,5 +183,46 @@ export class ProfileController {
     const limitNumber = limit ? parseInt(limit) : 10;
     const activities = await this.profileService.getUserActivity(userId, limitNumber);
     return new AdminSuccessResponse('User activity retrieved successfully', activities);
+  }
+
+  @Post('2fa/setup')
+  async requestTwoFactorSetup(@Query('userId') userId: string) {
+    if (!userId) {
+      throw new BadRequestException('User ID is required');
+    }
+    const user = await this.profileService.getUserById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    const result = await this.profileService.requestTwoFactorSetup(userId, user.email);
+    return new AdminSuccessResponse(result.message);
+  }
+
+  @Post('2fa/enable')
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  async enableTwoFactor(@Query('userId') userId: string, @Body() dto: EnableTwoFactorDto) {
+    if (!userId) {
+      throw new BadRequestException('User ID is required');
+    }
+    const user = await this.profileService.getUserById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    const result = await this.profileService.enableTwoFactor(userId, dto, user.email);
+    return new AdminSuccessResponse(result.message);
+  }
+
+  @Post('2fa/disable')
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  async disableTwoFactor(@Query('userId') userId: string, @Body() dto: DisableTwoFactorDto) {
+    if (!userId) {
+      throw new BadRequestException('User ID is required');
+    }
+    const user = await this.profileService.getUserById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    const result = await this.profileService.disableTwoFactor(userId, dto, user.email);
+    return new AdminSuccessResponse(result.message);
   }
 } 

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Login Notification</title>
+  <title>OTP Verification</title>
   <style>
     body {
       background: linear-gradient(135deg, #e3f2fd 0%, #f6f8fa 100%);
@@ -45,26 +45,49 @@
       border-top: 1.5px solid #e3f2fd;
       margin: 26px 0;
     }
-    .section {
-      margin-bottom: 20px;
+    .otp-container {
+      text-align: center;
+      margin: 30px 0;
+      padding: 24px;
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border-radius: 12px;
+      border: 2px solid #e3f2fd;
     }
-    .label {
+    .otp-label {
+      font-size: 1.1rem;
       color: #1976d2;
-      font-size: 1.01rem;
-      margin-bottom: 2px;
-      display: block;
       font-weight: 600;
-      letter-spacing: 0.2px;
+      margin-bottom: 12px;
+      display: block;
     }
-    .value {
-      font-size: 1.09rem;
-      color: #222;
-      font-weight: 500;
-      background: #f6f8fa;
-      border-radius: 6px;
-      padding: 6px 12px;
+    .otp-code {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: #1976d2;
+      letter-spacing: 8px;
+      background: #fff;
+      padding: 16px 24px;
+      border-radius: 8px;
+      border: 2px solid #1976d2;
       display: inline-block;
-      margin-top: 2px;
+      box-shadow: 0 4px 12px rgba(25, 118, 210, 0.15);
+    }
+    .expiry-info {
+      margin-top: 16px;
+      font-size: 0.95rem;
+      color: #666;
+      font-weight: 500;
+    }
+    .warning {
+      color: #d32f2f;
+      font-weight: 600;
+      margin-top: 22px;
+      text-align: center;
+      background: #ffebee;
+      border-radius: 6px;
+      padding: 12px 10px;
+      border: 1px solid #ffcdd2;
+      font-size: 0.9rem;
     }
     .footer {
       margin-top: 36px;
@@ -72,30 +95,15 @@
       color: #90a4ae;
       text-align: center;
     }
-    .warning {
-      color: #d32f2f;
-      font-weight: 700;
-      margin-top: 22px;
-      text-align: center;
-      background: #ffebee;
-      border-radius: 6px;
-      padding: 12px 10px;
-      border: 1px solid #ffcdd2;
-    }
-    .reset-link {
-      color: #fff !important;
+    .action-type {
       background: linear-gradient(90deg, #1976d2 60%, #64b5f6 100%);
-      padding: 7px 18px;
-      border-radius: 5px;
-      text-decoration: none;
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.9rem;
       font-weight: 600;
-      margin-left: 6px;
-      box-shadow: 0 1px 4px rgba(25, 118, 210, 0.10);
       display: inline-block;
-      transition: background 0.2s;
-    }
-    .reset-link:hover {
-      background: linear-gradient(90deg, #1565c0 60%, #42a5f5 100%);
+      margin-bottom: 16px;
     }
   </style>
 </head>
@@ -105,27 +113,25 @@
       <img src="https://ecomm-bucket-mp.s3.ap-south-1.amazonaws.com/avatars/1754074871722-IMG-20250619-WA0000.jpg" alt="MedoScopic Logo" class="logo">
       <div class="title">MedoScopic Admin</div>
     </div>
-    <h2 style="margin-bottom: 8px; color: #1976d2;">New Admin Login Detected</h2>
-    <p style="margin-bottom: 18px; color: #444;">A new login to your admin account was detected. If this was not you, please secure your account immediately.</p>
-    <hr class="divider" />
-    <div class="section">
-      <span class="label">Device</span>
-      <span class="value">{{device}}</span>
+    
+    <div style="text-align: center; margin-bottom: 20px;">
+      <span class="action-type">{{actionType}}</span>
     </div>
-    <div class="section">
-      <span class="label">Location</span>
-      <span class="value">{{location}}</span>
-      {{mapImage}}
+    
+    <h2 style="margin-bottom: 8px; color: #1976d2; text-align: center;">Verification Code</h2>
+    <p style="margin-bottom: 18px; color: #444; text-align: center;">Please use the following verification code to complete your action:</p>
+    
+    <div class="otp-container">
+      <span class="otp-label">Your Verification Code</span>
+      <div class="otp-code">{{otp}}</div>
+      <div class="expiry-info">This code will expire in 10 minutes</div>
     </div>
-    <div class="section">
-      <span class="label">IP Address</span>
-      <span class="value">{{ipAddress}}</span>
-    </div>
+    
     <div class="warning">
-      If this was not you,
-      <a href="#" class="reset-link">Reset your password</a>
-      or contact support.
+      <strong>Security Notice:</strong> Never share this code with anyone. 
+      MedoScopic will never ask for this code via phone or email.
     </div>
+    
     <div class="footer">
       &copy; MedoScopic Admin Panel<br />
       This is an automated message. Please do not reply.

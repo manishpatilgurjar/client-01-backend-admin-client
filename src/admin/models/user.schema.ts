@@ -16,6 +16,8 @@ export interface AdminUser extends Document {
   bio?: string;
   lastLogin?: Date;
   isActive: boolean;
+  twoFactorEnabled: boolean;
+  twoFactorSecret?: string;
   permissions: string[];
   preferences: {
     theme: string;
@@ -43,15 +45,17 @@ const AdminUserSchema = new Schema<AdminUser>({
   bio: { type: String },
   lastLogin: { type: Date },
   isActive: { type: Boolean, default: true },
-  permissions: { type: [String], default: ['read', 'write', 'delete', 'admin'] },
-  preferences: {
-    theme: { type: String, default: 'light' },
-    language: { type: String, default: 'en' },
-    notifications: {
-      email: { type: Boolean, default: true },
-      push: { type: Boolean, default: false }
-    }
-  },
+                permissions: { type: [String], default: ['read', 'write', 'delete', 'admin'] },
+              twoFactorEnabled: { type: Boolean, default: false },
+              twoFactorSecret: { type: String },
+              preferences: {
+                theme: { type: String, default: 'light' },
+                language: { type: String, default: 'en' },
+                notifications: {
+                  email: { type: Boolean, default: true },
+                  push: { type: Boolean, default: false }
+                }
+              },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });

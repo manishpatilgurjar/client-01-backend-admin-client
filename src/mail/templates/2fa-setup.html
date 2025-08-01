@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Two-Factor Authentication Setup</title>
+  <style>
+    body {
+      background: linear-gradient(135deg, #e3f2fd 0%, #f6f8fa 100%);
+      font-family: 'Inter', Arial, sans-serif;
+      color: #222;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 480px;
+      margin: 40px auto;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(25, 118, 210, 0.10), 0 1.5px 6px rgba(0,0,0,0.04);
+      padding: 36px 28px;
+      border: 1.5px solid #e3f2fd;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    .logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
+      margin-right: 14px;
+      box-shadow: 0 2px 8px rgba(25, 118, 210, 0.10);
+      object-fit: cover;
+    }
+    .title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #1976d2;
+      letter-spacing: 0.5px;
+    }
+    .divider {
+      border: none;
+      border-top: 1.5px solid #e3f2fd;
+      margin: 26px 0;
+    }
+    .setup-container {
+      text-align: center;
+      margin: 30px 0;
+      padding: 24px;
+      background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+      border-radius: 12px;
+      border: 2px solid #ff9800;
+    }
+    .setup-icon {
+      width: 60px;
+      height: 60px;
+      background: #ff9800;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      color: #fff;
+      font-size: 2rem;
+      font-weight: bold;
+    }
+    .otp-container {
+      text-align: center;
+      margin: 20px 0;
+      padding: 20px;
+      background: #fff;
+      border-radius: 8px;
+      border: 2px solid #1976d2;
+    }
+    .otp-code {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #1976d2;
+      letter-spacing: 6px;
+      background: #f8f9fa;
+      padding: 12px 20px;
+      border-radius: 6px;
+      display: inline-block;
+    }
+    .steps-container {
+      background: #f8f9fa;
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .step {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+    .step-number {
+      width: 24px;
+      height: 24px;
+      background: #1976d2;
+      color: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-right: 12px;
+      flex-shrink: 0;
+    }
+    .step-text {
+      color: #444;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+    .warning {
+      color: #d32f2f;
+      font-weight: 600;
+      margin-top: 22px;
+      text-align: center;
+      background: #ffebee;
+      border-radius: 6px;
+      padding: 12px 10px;
+      border: 1px solid #ffcdd2;
+      font-size: 0.9rem;
+    }
+    .footer {
+      margin-top: 36px;
+      font-size: 0.97rem;
+      color: #90a4ae;
+      text-align: center;
+    }
+    .action-type {
+      background: linear-gradient(90deg, #ff9800 60%, #ffb74d 100%);
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      display: inline-block;
+      margin-bottom: 16px;
+    }
+    .expiry-info {
+      margin-top: 16px;
+      font-size: 0.95rem;
+      color: #666;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="https://ecomm-bucket-mp.s3.ap-south-1.amazonaws.com/avatars/1754074871722-IMG-20250619-WA0000.jpg" alt="MedoScopic Logo" class="logo">
+      <div class="title">MedoScopic Admin</div>
+    </div>
+    
+    <div style="text-align: center; margin-bottom: 20px;">
+      <span class="action-type">{{actionType}}</span>
+    </div>
+    
+    <div class="setup-container">
+      <div class="setup-icon">🔐</div>
+      <h2 style="margin-bottom: 8px; color: #ff9800;">Two-Factor Authentication Setup</h2>
+      <p style="margin-bottom: 18px; color: #444;">Use the verification code below to complete your 2FA setup:</p>
+    </div>
+    
+    <div class="otp-container">
+      <strong style="color: #1976d2; display: block; margin-bottom: 8px;">Verification Code:</strong>
+      <div class="otp-code">{{otp}}</div>
+      <div class="expiry-info">This code will expire in 10 minutes</div>
+    </div>
+    
+    <div class="steps-container">
+      <h3 style="color: #1976d2; margin-bottom: 16px;">Setup Steps:</h3>
+      <div class="step">
+        <div class="step-number">1</div>
+        <div class="step-text">Enter the verification code above in your admin panel</div>
+      </div>
+      <div class="step">
+        <div class="step-number">2</div>
+        <div class="step-text">Click "Enable 2FA" to activate two-factor authentication</div>
+      </div>
+      <div class="step">
+        <div class="step-number">3</div>
+        <div class="step-text">Your account will now require OTP for future logins</div>
+      </div>
+    </div>
+    
+    <div class="warning">
+      <strong>Security Notice:</strong> Never share this code with anyone. 
+      MedoScopic will never ask for this code via phone or email.
+    </div>
+    
+    <div class="footer">
+      &copy; MedoScopic Admin Panel<br />
+      This is an automated message. Please do not reply.
+    </div>
+  </div>
+</body>
+</html> 

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Two-Factor Authentication Status Changed</title>
+  <style>
+    body {
+      background: linear-gradient(135deg, #e3f2fd 0%, #f6f8fa 100%);
+      font-family: 'Inter', Arial, sans-serif;
+      color: #222;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 480px;
+      margin: 40px auto;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(25, 118, 210, 0.10), 0 1.5px 6px rgba(0,0,0,0.04);
+      padding: 36px 28px;
+      border: 1.5px solid #e3f2fd;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    .logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
+      margin-right: 14px;
+      box-shadow: 0 2px 8px rgba(25, 118, 210, 0.10);
+      object-fit: cover;
+    }
+    .title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #1976d2;
+      letter-spacing: 0.5px;
+    }
+    .divider {
+      border: none;
+      border-top: 1.5px solid #e3f2fd;
+      margin: 26px 0;
+    }
+    .status-container {
+      text-align: center;
+      margin: 30px 0;
+      padding: 24px;
+      border-radius: 12px;
+    }
+    .status-enabled {
+      background: linear-gradient(135deg, #e8f5e8 0%, #f1f8f1 100%);
+      border: 2px solid #4caf50;
+    }
+    .status-disabled {
+      background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+      border: 2px solid #ff9800;
+    }
+    .status-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      color: #fff;
+      font-size: 2rem;
+      font-weight: bold;
+    }
+    .icon-enabled {
+      background: #4caf50;
+    }
+    .icon-disabled {
+      background: #ff9800;
+    }
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 20px 0;
+    }
+    .info-item {
+      background: #f8f9fa;
+      border: 1px solid #e9ecef;
+      border-radius: 6px;
+      padding: 12px;
+    }
+    .info-label {
+      font-size: 0.9rem;
+      color: #6c757d;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .info-value {
+      font-size: 1rem;
+      color: #222;
+      font-weight: 500;
+    }
+    .impact-container {
+      background: #e3f2fd;
+      border: 1px solid #bbdefb;
+      border-radius: 8px;
+      padding: 16px;
+      margin: 20px 0;
+    }
+    .impact-title {
+      color: #1976d2;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .impact-list {
+      color: #444;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+    .impact-list li {
+      margin-bottom: 4px;
+    }
+    .warning {
+      color: #d32f2f;
+      font-weight: 600;
+      margin-top: 22px;
+      text-align: center;
+      background: #ffebee;
+      border-radius: 6px;
+      padding: 12px 10px;
+      border: 1px solid #ffcdd2;
+      font-size: 0.9rem;
+    }
+    .footer {
+      margin-top: 36px;
+      font-size: 0.97rem;
+      color: #90a4ae;
+      text-align: center;
+    }
+    .action-button {
+      background: linear-gradient(90deg, #1976d2 60%, #64b5f6 100%);
+      color: #fff !important;
+      padding: 12px 24px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 600;
+      display: inline-block;
+      margin: 16px 8px;
+      box-shadow: 0 2px 8px rgba(25, 118, 210, 0.15);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="https://ecomm-bucket-mp.s3.ap-south-1.amazonaws.com/avatars/1754074871722-IMG-20250619-WA0000.jpg" alt="MedoScopic Logo" class="logo">
+      <div class="title">MedoScopic Admin</div>
+    </div>
+    
+    {{statusContainer}}
+    
+    <div class="info-grid">
+      <div class="info-item">
+        <div class="info-label">Change Date</div>
+        <div class="info-value">{{changeDate}}</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Change Time</div>
+        <div class="info-value">{{changeTime}}</div>
+      </div>
+      {{ipAddressItem}}
+      {{userAgentItem}}
+    </div>
+    
+    {{impactContainer}}
+    
+    <div style="text-align: center; margin: 24px 0;">
+      <a href="#" class="action-button">Login to Admin Panel</a>
+      {{reEnableButton}}
+    </div>
+    
+    <div class="warning">
+      <strong>Security Notice:</strong> If you didn't make this change, 
+      please contact support immediately and secure your account.
+    </div>
+    
+    <div class="footer">
+      &copy; MedoScopic Admin Panel<br />
+      This is an automated message. Please do not reply.
+    </div>
+  </div>
+</body>
+</html> 

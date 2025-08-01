@@ -1,3 +1,5 @@
+import { IsString, IsNotEmpty, MinLength, MaxLength } from 'class-validator';
+
 /**
  * DTO for admin login requests.
  * Accepts only email and a password, plus device/session info.
@@ -39,6 +41,20 @@ export class AdminLoginResponseDto {
     phone?: string;
     location?: string;
   };
+}
+
+export class AdminLoginWithOTPDto {
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(6, { message: 'OTP must be 6 characters' })
+  @MaxLength(6, { message: 'OTP must be 6 characters' })
+  otp: string;
+}
+
+export class AdminLoginStep1ResponseDto {
+  requiresOTP: boolean;
+  message: string;
+  tempToken?: string;
 }
 
 /**

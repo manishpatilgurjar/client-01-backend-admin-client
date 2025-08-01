@@ -19,18 +19,55 @@ import { DashboardController } from './controllers/dashboard.controller';
 import { DashboardService } from './services/dashboard.service';
 import { ActivityLogService } from './services/activity-log.service';
 import { S3UploadService } from '../common/services/s3-upload.service';
+import { ContactController } from './controllers/contact.controller';
+import { EnquiryController } from './controllers/enquiry.controller';
+import { EnquiryService } from './services/enquiry.service';
 
 /**
  * AdminModule bundles all admin-related controllers and services.
  * Import this module in AppModule to enable admin APIs.
  */
 @Module({
-  controllers: [AuthController, ProfileController, AboutUsController, PrivacyPolicyController, ProductController, FAQController, IndexPageController, DashboardController],
-  providers: [AuthService, ProfileService, MailService, AboutUsService, PrivacyPolicyService, ProductService, FAQService, IndexPageService, DashboardService, ActivityLogService, S3UploadService],
+  controllers: [
+    AuthController, 
+    ProfileController, 
+    AboutUsController, 
+    PrivacyPolicyController, 
+    ProductController, 
+    FAQController, 
+    IndexPageController, 
+    DashboardController,
+    ContactController,
+    EnquiryController
+  ],
+  providers: [
+    AuthService, 
+    ProfileService, 
+    MailService, 
+    AboutUsService, 
+    PrivacyPolicyService, 
+    ProductService, 
+    FAQService, 
+    IndexPageService, 
+    DashboardService, 
+    ActivityLogService, 
+    S3UploadService,
+    EnquiryService
+  ],
   exports: [AuthService],
 })
 export class AdminModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(AdminAuthMiddleware).forRoutes('admin/profile', 'admin/users/profile', 'admin/about-us', 'admin/privacy-policy', 'admin/products', 'admin/faqs', 'admin/index-page', 'admin/dashboard');
+    consumer.apply(AdminAuthMiddleware).forRoutes(
+      'admin/profile', 
+      'admin/users/profile', 
+      'admin/about-us', 
+      'admin/privacy-policy', 
+      'admin/products', 
+      'admin/faqs', 
+      'admin/index-page', 
+      'admin/dashboard',
+      'admin/enquiries'
+    );
   }
 } 

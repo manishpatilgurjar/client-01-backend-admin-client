@@ -116,6 +116,22 @@ export class UpdatePreferencesDto {
   pushNotifications?: boolean;
 }
 
+export class EnableTwoFactorDto {
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(6, { message: 'OTP must be 6 characters' })
+  @MaxLength(6, { message: 'OTP must be 6 characters' })
+  otp: string;
+}
+
+export class DisableTwoFactorDto {
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(6, { message: 'OTP must be 6 characters' })
+  @MaxLength(6, { message: 'OTP must be 6 characters' })
+  otp: string;
+}
+
 export class UserProfileResponse {
   id: string;
   firstName: string;
@@ -138,6 +154,7 @@ export class UserProfileResponse {
     timeAgo: string;
   };
   isActive: boolean;
+  twoFactorEnabled: boolean;
   permissions: string[];
   preferences: {
     theme: string;
