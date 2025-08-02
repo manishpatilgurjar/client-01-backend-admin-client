@@ -5,12 +5,14 @@ import { ContactFormDto, UpdateEnquiryDto, EnquiryQueryDto, EnquiryResponseDto, 
 import { AdminMessages } from '../enums/messages';
 import { ActivityLogService } from './activity-log.service';
 import { MailService } from '../../mail/mail.service';
+import { EncryptionService } from '../../common/services/encryption.service';
 
 @Injectable()
 export class EnquiryService {
   constructor(
     private readonly activityLogService: ActivityLogService,
-    private readonly mailService: MailService
+    private readonly mailService: MailService,
+    private readonly encryptionService: EncryptionService
   ) {}
 
   /**
@@ -507,7 +509,7 @@ export class EnquiryService {
   }
 
   /**
-   * Export enquiries for CSV generation (admin API)
+   * Export enquiries for CSV generation (admin API) - Encrypted
    */
   async exportEnquiries(dto: any): Promise<{
     enquiries: {
@@ -611,27 +613,40 @@ export class EnquiryService {
       .sort({ createdAt: -1 })
       .lean();
 
-    // Transform to export format
-    const exportData = enquiries.map(enquiry => ({
-      fullName: enquiry.fullName || '',
-      email: enquiry.email || '',
-      phone: enquiry.phone || '',
-      message: enquiry.message || '',
-      contactDate: enquiry.createdAt ? enquiry.createdAt.toISOString().split('T')[0] : ''
-    }));
+    // Transform to export format and encrypt each record individually
+    const encryptedEnquiries = enquiries.map(enquiry => {
+      const enquiryData = {
+        fullName: enquiry.fullName || '',
+        email: enquiry.email || '',
+        phone: enquiry.phone || '',
+        message: enquiry.message || '',
+        contactDate: enquiry.createdAt ? enquiry.createdAt.toISOString().split('T')[0] : ''
+      };
+      
+      // Encrypt each enquiry record individually
+      const encrypted = this.encryptionService.encryptData(enquiryData);
+      
+      return {
+        fullName: encrypted.encryptedData,
+        email: encrypted.encryptionKey,
+        phone: encrypted.iv,
+        message: encrypted.tag,
+        contactDate: enquiry.createdAt ? enquiry.createdAt.toISOString().split('T')[0] : ''
+      };
+    });
 
     // Log export activity
     await this.activityLogService.logActivity({
       action: 'Exported Enquiries',
       entity: 'Enquiry',
-      entityName: `Export - ${exportData.length} enquiries`,
-      details: `Exported ${exportData.length} enquiries with filters: ${JSON.stringify(dto)}`,
+      entityName: `Export - ${encryptedEnquiries.length} enquiries`,
+      details: `Exported ${encryptedEnquiries.length} enquiries with filters: ${JSON.stringify(dto)}`,
       type: 'system'
     });
 
     return {
-      enquiries: exportData,
-      totalCount: exportData.length,
+      enquiries: encryptedEnquiries,
+      totalCount: encryptedEnquiries.length,
       exportDate: new Date().toISOString(),
       filters: dto
     };

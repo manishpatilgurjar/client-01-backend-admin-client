@@ -19,6 +19,7 @@ import { DashboardController } from './controllers/dashboard.controller';
 import { DashboardService } from './services/dashboard.service';
 import { ActivityLogService } from './services/activity-log.service';
 import { S3UploadService } from '../common/services/s3-upload.service';
+import { EncryptionService } from '../common/services/encryption.service';
 import { ContactController } from './controllers/contact.controller';
 import { EnquiryController } from './controllers/enquiry.controller';
 import { EnquiryService } from './services/enquiry.service';
@@ -52,7 +53,8 @@ import { EnquiryService } from './services/enquiry.service';
     DashboardService, 
     ActivityLogService, 
     S3UploadService,
-    EnquiryService
+    EnquiryService,
+    EncryptionService
   ],
   exports: [AuthService],
 })
