@@ -15,18 +15,11 @@ const jwt = require('jsonwebtoken');
 @Injectable()
 export class AdminAuthMiddleware implements NestMiddleware {
   async use(req: Request, res: Response, next: NextFunction) {
-    console.log('🔍 [MIDDLEWARE] Request received');
-    console.log('🌐 [MIDDLEWARE] URL:', req.url);
-    console.log('📋 [MIDDLEWARE] Method:', req.method);
-    console.log('📋 [MIDDLEWARE] Headers:', Object.keys(req.headers));
-    
     try {
       // 1. Check for Authorization header
       const authHeader = req.headers['authorization'];
-      console.log('🔑 [MIDDLEWARE] Authorization header:', authHeader ? 'PRESENT' : 'MISSING');
       
       if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        console.log('❌ [MIDDLEWARE] Missing or invalid Authorization header');
         throw new UnauthorizedException(AdminMessages.LOGIN_MISSING_AUTH_HEADER);
       }
       const token = authHeader.split(' ')[1];

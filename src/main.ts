@@ -34,7 +34,7 @@ async function bootstrap() {
   const dbProvider = app.get(DatabaseProvider);
   try {
     await dbProvider.connect();
-    console.log('✅ Connected to MongoDB');
+
   } catch (err) {
     console.error('❌ Failed to connect to MongoDB:', err);
     process.exit(1);
@@ -43,6 +43,6 @@ async function bootstrap() {
   // Start the server on all interfaces (0.0.0.0)
   const port = process.env.PORT ?? 3000;
   await app.listen(port, '0.0.0.0');
-  console.log(`🚀 Server is running on http://0.0.0.0:${port}`);
+
 }
 bootstrap();

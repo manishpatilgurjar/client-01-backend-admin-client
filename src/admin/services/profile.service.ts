@@ -36,7 +36,7 @@ export class ProfileService {
   async getProfile(userId: string): Promise<UserProfileResponse> {
     const user = await AdminUserModel.findById(userId);
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException(AdminMessages.USER_NOT_FOUND);
     }
 
     // Update last login time when profile is accessed
@@ -80,14 +80,14 @@ export class ProfileService {
   async updateProfile(userId: string, dto: UpdateProfileDto, userEmail?: string): Promise<UserProfileResponse> {
     const user = await AdminUserModel.findById(userId);
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException(AdminMessages.USER_NOT_FOUND);
     }
 
     // Check if email is being changed and if it's already taken
     if (dto.email !== user.email) {
       const existingUser = await AdminUserModel.findOne({ email: dto.email });
       if (existingUser) {
-        throw new BadRequestException('Email is already taken');
+        throw new BadRequestException(AdminMessages.EMAIL_ALREADY_TAKEN);
       }
     }
 
@@ -121,7 +121,7 @@ export class ProfileService {
   async uploadAvatar(userId: string, file: Express.Multer.File, userEmail?: string): Promise<{ avatar: string; avatarUrl: string }> {
     const user = await AdminUserModel.findById(userId);
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException(AdminMessages.USER_NOT_FOUND);
     }
 
     // Upload to S3
@@ -154,18 +154,18 @@ export class ProfileService {
   async changePassword(userId: string, dto: ChangePasswordDto, userEmail?: string): Promise<{ message: string }> {
     const user = await AdminUserModel.findById(userId);
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException(AdminMessages.USER_NOT_FOUND);
     }
 
     // Verify current password
     const isCurrentPasswordValid = await bcrypt.compare(dto.currentPassword, user.password);
     if (!isCurrentPasswordValid) {
-      throw new UnauthorizedException('Current password is incorrect');
+      throw new UnauthorizedException(AdminMessages.CURRENT_PASSWORD_INCORRECT);
     }
 
     // Verify new password confirmation
     if (dto.newPassword !== dto.confirmPassword) {
-      throw new BadRequestException('New password and confirmation do not match');
+      throw new BadRequestException(AdminMessages.NEW_PASSWORD_MISMATCH);
     }
 
     // Generate OTP
@@ -205,7 +205,7 @@ export class ProfileService {
   async verifyOTPAndChangePassword(userId: string, dto: VerifyOTPDto, userEmail?: string): Promise<{ message: string; sessionsDestroyed: number }> {
     const user = await AdminUserModel.findById(userId);
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException(AdminMessages.USER_NOT_FOUND);
     }
 
     // Find valid OTP
@@ -217,7 +217,7 @@ export class ProfileService {
     });
 
     if (!passwordReset) {
-      throw new BadRequestException('Invalid or expired OTP');
+      throw new BadRequestException(AdminMessages.INVALID_OR_EXPIRED_OTP);
     }
 
     // Mark OTP as used

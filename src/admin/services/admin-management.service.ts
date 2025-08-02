@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { AdminMessages } from '../enums/messages';
 import { AdminUserModel } from '../models/user.schema';
 import { 
   CreateAdminDto, 
@@ -39,7 +40,7 @@ export class AdminManagementService {
     // Check if current user is super admin
     const currentUser = await AdminUserModel.findById(currentUserId);
     if (!currentUser || currentUser.role !== 'super_admin') {
-      throw new UnauthorizedException('Only super admins can manage other admins');
+      throw new UnauthorizedException(AdminMessages.ADMIN_ONLY_SUPER_ADMIN_MANAGE);
     }
 
     const page = parseInt(query.page || '1') || 1;
@@ -131,12 +132,12 @@ export class AdminManagementService {
     // Check if current user is super admin
     const currentUser = await AdminUserModel.findById(currentUserId);
     if (!currentUser || currentUser.role !== 'super_admin') {
-      throw new UnauthorizedException('Only super admins can view admin details');
+      throw new UnauthorizedException(AdminMessages.ADMIN_ONLY_SUPER_ADMIN_VIEW);
     }
 
     const admin = await AdminUserModel.findById(adminId).lean();
     if (!admin) {
-      throw new NotFoundException('Admin not found');
+      throw new NotFoundException(AdminMessages.ADMIN_NOT_FOUND);
     }
 
     return {
@@ -174,19 +175,19 @@ export class AdminManagementService {
     // Check if current user is super admin
     const currentUser = await AdminUserModel.findById(currentUserId);
     if (!currentUser || currentUser.role !== 'super_admin') {
-      throw new UnauthorizedException('Only super admins can create new admins');
+      throw new UnauthorizedException(AdminMessages.ADMIN_ONLY_SUPER_ADMIN_CREATE);
     }
 
     // Check if email already exists
     const existingAdmin = await AdminUserModel.findOne({ email: dto.email });
     if (existingAdmin) {
-      throw new BadRequestException('Email already exists');
+      throw new BadRequestException(AdminMessages.ADMIN_EMAIL_EXISTS);
     }
 
     // Check if username already exists
     const existingUsername = await AdminUserModel.findOne({ username: dto.username });
     if (existingUsername) {
-      throw new BadRequestException('Username already exists');
+      throw new BadRequestException(AdminMessages.ADMIN_USERNAME_EXISTS);
     }
 
     // Create admin
@@ -262,24 +263,24 @@ export class AdminManagementService {
     // Check if current user is super admin
     const currentUser = await AdminUserModel.findById(currentUserId);
     if (!currentUser || currentUser.role !== 'super_admin') {
-      throw new UnauthorizedException('Only super admins can update other admins');
+      throw new UnauthorizedException(AdminMessages.ADMIN_ONLY_SUPER_ADMIN_UPDATE);
     }
 
     const admin = await AdminUserModel.findById(adminId);
     if (!admin) {
-      throw new NotFoundException('Admin not found');
+      throw new NotFoundException(AdminMessages.ADMIN_NOT_FOUND);
     }
 
     // Prevent super admin from changing their own role
     if (adminId === currentUserId && dto.role && dto.role !== 'super_admin') {
-      throw new BadRequestException('Cannot change your own role');
+      throw new BadRequestException(AdminMessages.ADMIN_CANNOT_CHANGE_OWN_ROLE);
     }
 
     // Check if email is being changed and if it's already taken
     if (dto.email && dto.email !== admin.email) {
       const existingAdmin = await AdminUserModel.findOne({ email: dto.email });
       if (existingAdmin) {
-        throw new BadRequestException('Email already exists');
+        throw new BadRequestException(AdminMessages.ADMIN_EMAIL_EXISTS);
       }
     }
 
@@ -287,7 +288,7 @@ export class AdminManagementService {
     if (dto.username && dto.username !== admin.username) {
       const existingUsername = await AdminUserModel.findOne({ username: dto.username });
       if (existingUsername) {
-        throw new BadRequestException('Username already exists');
+        throw new BadRequestException(AdminMessages.ADMIN_USERNAME_EXISTS);
       }
     }
 
@@ -352,17 +353,17 @@ export class AdminManagementService {
     // Check if current user is super admin
     const currentUser = await AdminUserModel.findById(currentUserId);
     if (!currentUser || currentUser.role !== 'super_admin') {
-      throw new UnauthorizedException('Only super admins can change admin passwords');
+      throw new UnauthorizedException(AdminMessages.ADMIN_ONLY_SUPER_ADMIN_CHANGE_PASSWORD);
     }
 
     const admin = await AdminUserModel.findById(adminId);
     if (!admin) {
-      throw new NotFoundException('Admin not found');
+      throw new NotFoundException(AdminMessages.ADMIN_NOT_FOUND);
     }
 
     // Verify password confirmation
     if (dto.newPassword !== dto.confirmPassword) {
-      throw new BadRequestException('Password and confirmation do not match');
+      throw new BadRequestException(AdminMessages.ADMIN_PASSWORD_MISMATCH);
     }
 
     // Update password
@@ -407,17 +408,17 @@ export class AdminManagementService {
     // Check if current user is super admin
     const currentUser = await AdminUserModel.findById(currentUserId);
     if (!currentUser || currentUser.role !== 'super_admin') {
-      throw new UnauthorizedException('Only super admins can delete other admins');
+      throw new UnauthorizedException(AdminMessages.ADMIN_ONLY_SUPER_ADMIN_DELETE);
     }
 
     const admin = await AdminUserModel.findById(adminId);
     if (!admin) {
-      throw new NotFoundException('Admin not found');
+      throw new NotFoundException(AdminMessages.ADMIN_NOT_FOUND);
     }
 
     // Prevent super admin from deleting themselves
     if (adminId === currentUserId) {
-      throw new BadRequestException('Cannot delete your own account');
+      throw new BadRequestException(AdminMessages.ADMIN_CANNOT_DELETE_OWN_ACCOUNT);
     }
 
     // Soft delete by setting isActive to false
@@ -461,7 +462,7 @@ export class AdminManagementService {
     // Check if current user is super admin
     const currentUser = await AdminUserModel.findById(currentUserId);
     if (!currentUser || currentUser.role !== 'super_admin') {
-      throw new UnauthorizedException('Only super admins can view admin statistics');
+      throw new UnauthorizedException(AdminMessages.ADMIN_ONLY_SUPER_ADMIN_STATS);
     }
 
     const total = await AdminUserModel.countDocuments();
@@ -501,17 +502,17 @@ export class AdminManagementService {
     // Check if current user is super admin
     const currentUser = await AdminUserModel.findById(currentUserId);
     if (!currentUser || currentUser.role !== 'super_admin') {
-      throw new UnauthorizedException('Only super admins can toggle admin status');
+      throw new UnauthorizedException(AdminMessages.ADMIN_ONLY_SUPER_ADMIN_TOGGLE);
     }
 
     const admin = await AdminUserModel.findById(adminId);
     if (!admin) {
-      throw new NotFoundException('Admin not found');
+      throw new NotFoundException(AdminMessages.ADMIN_NOT_FOUND);
     }
 
     // Prevent super admin from deactivating themselves
     if (adminId === currentUserId) {
-      throw new BadRequestException('Cannot deactivate your own account');
+      throw new BadRequestException(AdminMessages.ADMIN_CANNOT_DEACTIVATE_OWN_ACCOUNT);
     }
 
     // Toggle status

@@ -56,4 +56,55 @@ export enum AdminMessages {
   ENQUIRY_UPDATED_SUCCESS = 'Enquiry updated successfully',
   ENQUIRY_DELETED_SUCCESS = 'Enquiry deleted successfully',
   ENQUIRY_NOT_FOUND = 'Enquiry not found',
+  
+  // Admin Management Messages
+  ADMIN_ONLY_SUPER_ADMIN_MANAGE = 'Only super admins can manage other admins',
+  ADMIN_ONLY_SUPER_ADMIN_VIEW = 'Only super admins can view admin details',
+  ADMIN_NOT_FOUND = 'Admin not found',
+  ADMIN_ONLY_SUPER_ADMIN_CREATE = 'Only super admins can create new admins',
+  ADMIN_EMAIL_EXISTS = 'Email already exists',
+  ADMIN_USERNAME_EXISTS = 'Username already exists',
+  ADMIN_ONLY_SUPER_ADMIN_UPDATE = 'Only super admins can update other admins',
+  ADMIN_CANNOT_CHANGE_OWN_ROLE = 'Cannot change your own role',
+  ADMIN_ONLY_SUPER_ADMIN_CHANGE_PASSWORD = 'Only super admins can change admin passwords',
+  ADMIN_PASSWORD_MISMATCH = 'Password and confirmation do not match',
+  ADMIN_ONLY_SUPER_ADMIN_DELETE = 'Only super admins can delete other admins',
+  ADMIN_CANNOT_DELETE_OWN_ACCOUNT = 'Cannot delete your own account',
+  ADMIN_ONLY_SUPER_ADMIN_STATS = 'Only super admins can view admin statistics',
+  ADMIN_ONLY_SUPER_ADMIN_TOGGLE = 'Only super admins can toggle admin status',
+  ADMIN_CANNOT_DEACTIVATE_OWN_ACCOUNT = 'Cannot deactivate your own account',
+  
+  // Profile Messages
+  USER_NOT_FOUND = 'User not found',
+  EMAIL_ALREADY_TAKEN = 'Email is already taken',
+  CURRENT_PASSWORD_INCORRECT = 'Current password is incorrect',
+  NEW_PASSWORD_MISMATCH = 'New password and confirmation do not match',
+  INVALID_OR_EXPIRED_OTP = 'Invalid or expired OTP',
+  INVALID_OR_EXPIRED_RESET_TOKEN = 'Invalid or expired reset token',
+  USER_ID_REQUIRED = 'User ID is required',
+  
+  // Index Page Messages
+  INDEX_PAGE_NOT_FOUND = 'Index page not found',
+  SECTION_NOT_FOUND = 'Section not found',
+  INVALID_SECTION_IDS = 'Invalid section IDs',
+  PRODUCT_DOES_NOT_EXIST = 'Product does not exist',
+  FEATURED_PRODUCTS_MAX_4 = 'Featured products array must have max 4 product IDs',
+  FEATURED_PRODUCTS_ONLY = 'This endpoint is only available for Featured Products sections',
+  
+  // About Us Messages
+  ABOUT_US_NOT_FOUND = 'About Us not found',
+  TEAM_MEMBER_NOT_FOUND = 'Team member not found',
+  
+  // FAQ Messages
+  FAQ_NOT_FOUND = 'FAQ not found',
+  
+  // Privacy Policy Messages
+  PRIVACY_POLICY_NOT_FOUND = 'Privacy Policy not found',
+  
+  // Site Settings Messages
+  SITE_SETTINGS_NOT_FOUND = 'Site settings not found',
+  SITE_SETTINGS_KEY_EXISTS = 'Site settings with this key already exists',
+  
+  // Auth Messages
+  INVALID_TEMPORARY_TOKEN = 'Invalid temporary token',
 }

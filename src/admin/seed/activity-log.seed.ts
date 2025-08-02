@@ -2,7 +2,7 @@ import { ActivityLogService } from '../services/activity-log.service';
 
 export async function seedActivityLog(activityLogService: ActivityLogService) {
   try {
-    console.log('🌱 Seeding Activity Log...');
+  
 
     // Log some initial system activities
     await activityLogService.logSystemActivity('System Initialized', 'Admin panel started successfully');
@@ -34,7 +34,7 @@ export async function seedActivityLog(activityLogService: ActivityLogService) {
     await activityLogService.logPageUpdated('Index Page', 'admin', 'admin@example.com');
     await activityLogService.logPageUpdated('About Us', 'admin', 'admin@example.com');
 
-    console.log('✅ Activity Log seeded successfully');
+
   } catch (error) {
     console.error('❌ Error seeding Activity Log:', error);
   }

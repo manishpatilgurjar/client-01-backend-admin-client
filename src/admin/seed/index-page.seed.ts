@@ -6,7 +6,7 @@ export const seedIndexPage = async () => {
     const existingIndexPage = await IndexPageModel.findOne({ pageId: 'index-page' });
     
     if (existingIndexPage) {
-      console.log('Index page already exists, skipping seed...');
+  
       return;
     }
 
@@ -100,7 +100,7 @@ export const seedIndexPage = async () => {
     };
 
     await IndexPageModel.create(indexPageData);
-    console.log('Index page seeded successfully!');
+
   } catch (error) {
     console.error('Error seeding index page:', error);
   }

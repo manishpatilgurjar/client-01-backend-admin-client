@@ -22,9 +22,9 @@ async function seedAdmin() {
       location: '123 Admin Street, Admin City',
     });
     await admin.save();
-    console.log('Default admin user created.');
+
   } else {
-    console.log('Admin user already exists.');
+    
   }
 
   // Seed index page
