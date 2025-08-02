@@ -598,4 +598,65 @@ export class MailService {
       return null;
     }
   }
+
+  /**
+   * Sends campaign email to recipients
+   * @param to - Recipient email address
+   * @param subject - Email subject
+   * @param content - Email content (HTML)
+   */
+  async sendCampaignEmail(to: string, subject: string, content: string) {
+    // Get site settings
+    const siteSettings = await this.getSiteSettingsForEmail();
+    
+    // Create email HTML with campaign content
+    const emailHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>${subject}</title>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: #f8f9fa; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: #fff; padding: 20px; border: 1px solid #e9ecef; }
+          .footer { background: #f8f9fa; padding: 15px; text-align: center; border-radius: 0 0 8px 8px; font-size: 12px; color: #6c757d; }
+          .unsubscribe { color: #6c757d; text-decoration: none; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h2>${siteSettings.siteName}</h2>
+          </div>
+          <div class="content">
+            ${content}
+          </div>
+          <div class="footer">
+            <p>This email was sent by ${siteSettings.siteName}</p>
+            <p>Contact: ${siteSettings.businessEmail} | Phone: ${siteSettings.contactNumber}</p>
+            <p><a href="#" class="unsubscribe">Unsubscribe</a> | <a href="${siteSettings.siteUrl}" class="unsubscribe">Visit Website</a></p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+    
+    // Send email with proper error handling
+    const mailOptions = {
+      from: siteSettings.businessEmail || process.env.GMAIL_USER,
+      to: to,
+      subject: subject,
+      html: emailHtml
+    };
+    
+    try {
+      return await this.transporter.sendMail(mailOptions);
+    } catch (error) {
+      console.error(`Failed to send campaign email to ${to}:`, error);
+      throw error; // Re-throw for campaign service to handle
+    }
+  }
 } 

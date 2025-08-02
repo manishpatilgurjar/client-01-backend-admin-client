@@ -1,4 +1,5 @@
 import { Module, MiddlewareConsumer } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
 import { AuthController } from './controllers/auth.controller';
 import { AuthService } from './services/auth.service';
 import { MailService } from '../mail/mail.service';
@@ -27,12 +28,21 @@ import { SiteSettingsController } from './controllers/site-settings.controller';
 import { SiteSettingsService } from './services/site-settings.service';
 import { AdminManagementController } from './controllers/admin-management.controller';
 import { AdminManagementService } from './services/admin-management.service';
+import { CampaignController } from './controllers/campaign.controller';
+import { CampaignService } from './services/campaign.service';
+import { CampaignSchedulerService } from './services/campaign-scheduler.service';
+import { Campaign, CampaignSchema } from './models/campaign.schema';
 
 /**
  * AdminModule bundles all admin-related controllers and services.
  * Import this module in AppModule to enable admin APIs.
  */
 @Module({
+  imports: [
+    MongooseModule.forFeature([
+      { name: Campaign.name, schema: CampaignSchema }
+    ])
+  ],
   controllers: [
     AuthController, 
     ProfileController, 
@@ -45,7 +55,8 @@ import { AdminManagementService } from './services/admin-management.service';
     ContactController,
     EnquiryController,
     SiteSettingsController,
-    AdminManagementController
+    AdminManagementController,
+    CampaignController
   ],
   providers: [
     AuthService, 
@@ -62,7 +73,9 @@ import { AdminManagementService } from './services/admin-management.service';
     EnquiryService,
     EncryptionService,
     SiteSettingsService,
-    AdminManagementService
+    AdminManagementService,
+    CampaignService,
+    CampaignSchedulerService
   ],
   exports: [AuthService],
 })
@@ -79,7 +92,8 @@ export class AdminModule {
       'admin/dashboard',
       'admin/enquiries',
       'admin/site-settings',
-      'admin/admin-management'
+      'admin/admin-management',
+      'admin/campaigns'
     );
   }
 } 
