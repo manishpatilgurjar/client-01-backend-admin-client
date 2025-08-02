@@ -22,7 +22,31 @@ export class S3UploadService {
    * Upload file to S3
    */
   async uploadFile(file: Express.Multer.File, folder: string = 'uploads'): Promise<string> {
+    console.log(`🔍 [S3Upload] uploadFile called with folder: ${folder}`);
+    console.log(`📁 [S3Upload] File details:`, {
+      originalname: file?.originalname,
+      mimetype: file?.mimetype,
+      size: file?.size,
+      buffer: file?.buffer ? `Buffer size: ${file.buffer.length}` : 'No buffer'
+    });
+
+    if (!file) {
+      console.log(`❌ [S3Upload] File is null/undefined`);
+      throw new Error('File is required for upload');
+    }
+
+    if (!file.originalname) {
+      console.log(`❌ [S3Upload] File originalname is missing`);
+      throw new Error('File originalname is required');
+    }
+
+    if (!file.buffer) {
+      console.log(`❌ [S3Upload] File buffer is missing`);
+      throw new Error('File buffer is required');
+    }
+
     const fileName = `${folder}/${Date.now()}-${file.originalname}`;
+    console.log(`📝 [S3Upload] Generated filename: ${fileName}`);
     
     const command = new PutObjectCommand({
       Bucket: this.bucketName,
@@ -31,11 +55,19 @@ export class S3UploadService {
       ContentType: file.mimetype,
     });
 
-    await this.s3Client.send(command);
-    
-    const imageUrl = `https://${this.bucketName}.s3.${process.env.AWS_REGION || 'ap-south-1'}.amazonaws.com/${fileName}`;
-    
-    return imageUrl;
+    console.log(`🔄 [S3Upload] Sending command to S3 with bucket: ${this.bucketName}`);
+    try {
+      await this.s3Client.send(command);
+      console.log(`✅ [S3Upload] File uploaded to S3 successfully`);
+      
+      const imageUrl = `https://${this.bucketName}.s3.${process.env.AWS_REGION || 'ap-south-1'}.amazonaws.com/${fileName}`;
+      console.log(`🔗 [S3Upload] Generated URL: ${imageUrl}`);
+      
+      return imageUrl;
+    } catch (error) {
+      console.log(`❌ [S3Upload] S3 upload failed:`, error);
+      throw error;
+    }
   }
 
   /**

@@ -11,7 +11,8 @@ import {
   UseInterceptors,
   UploadedFile,
   UsePipes,
-  ValidationPipe
+  ValidationPipe,
+  BadRequestException
 } from '@nestjs/common';
 import { ProductService } from '../services/product.service';
 import { CreateProductDto, UpdateProductDto, UpdateProductStatusDto } from '../enums/product.dto';
@@ -86,6 +87,10 @@ export class ProductController {
   @Post(':id/upload-image')
   @UseInterceptors(FileUploadInterceptor)
   async uploadProductImage(@Param('id') id: string, @UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('No file uploaded. Please select an image file.');
+    }
+    
     try {
       const imageUrl = await this.productService.uploadProductImage(file);
       const result = await this.productService.addProductImage(id, imageUrl);

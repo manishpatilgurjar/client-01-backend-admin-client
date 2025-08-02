@@ -75,6 +75,10 @@ export class ProfileController {
       throw new BadRequestException('User ID is required');
     }
     
+    if (!file) {
+      throw new BadRequestException('No file uploaded. Please select an image file.');
+    }
+    
     // Get user email from the user ID
     const user = await this.profileService.getUserById(userId);
     if (!user) {

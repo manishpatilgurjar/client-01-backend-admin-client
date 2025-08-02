@@ -10,7 +10,8 @@ import {
   ValidationPipe,
   UseInterceptors,
   UploadedFile,
-  Req
+  Req,
+  BadRequestException
 } from '@nestjs/common';
 import { AboutUsService } from '../services/about-us.service';
 import { UpdateAboutUsDto, AboutSectionDto, TeamMemberDto } from '../enums/about-us.dto';
@@ -51,12 +52,32 @@ export class AboutUsController {
   @Post('upload-main-image')
   @UseInterceptors(FileUploadInterceptor)
   async uploadMainImage(@UploadedFile() file: Express.Multer.File) {
+    console.log(`🔍 [AboutUs] uploadMainImage called`);
+    console.log(`📁 [AboutUs] File received:`, {
+      exists: !!file,
+      originalname: file?.originalname,
+      mimetype: file?.mimetype,
+      size: file?.size,
+      fieldname: file?.fieldname
+    });
+
+    if (!file) {
+      console.log(`❌ [AboutUs] No file uploaded`);
+      throw new BadRequestException('No file uploaded. Please select an image file.');
+    }
+    
     try {
+      console.log(`🔄 [AboutUs] Starting S3 upload for main image`);
       const imageUrl = await this.aboutUsService.uploadMainImage(file);
-      // Update the main image URL in the database
+      console.log(`✅ [AboutUs] S3 upload successful: ${imageUrl}`);
+      
+      console.log(`🔄 [AboutUs] Updating main image URL in database`);
       await this.aboutUsService.updateMainImage(imageUrl);
+      console.log(`✅ [AboutUs] Main image updated successfully`);
+      
       return new AdminSuccessResponse('Main image uploaded successfully', { imageUrl });
     } catch (error) {
+      console.log(`❌ [AboutUs] Error in uploadMainImage:`, error);
       throw error;
     }
   }
@@ -68,8 +89,29 @@ export class AboutUsController {
   @Post('upload-team-member-image')
   @UseInterceptors(FileUploadInterceptor)
   async uploadTeamMemberImage(@UploadedFile() file: Express.Multer.File) {
-    const imageUrl = await this.aboutUsService.uploadTeamMemberImage(file);
-    return new AdminSuccessResponse('Team member image uploaded successfully', { imageUrl });
+    console.log(`🔍 [AboutUs] uploadTeamMemberImage called`);
+    console.log(`📁 [AboutUs] File received:`, {
+      exists: !!file,
+      originalname: file?.originalname,
+      mimetype: file?.mimetype,
+      size: file?.size,
+      fieldname: file?.fieldname
+    });
+
+    if (!file) {
+      console.log(`❌ [AboutUs] No file uploaded`);
+      throw new BadRequestException('No file uploaded. Please select an image file.');
+    }
+    
+    try {
+      console.log(`🔄 [AboutUs] Starting S3 upload for team member image`);
+      const imageUrl = await this.aboutUsService.uploadTeamMemberImage(file);
+      console.log(`✅ [AboutUs] S3 upload successful: ${imageUrl}`);
+      return new AdminSuccessResponse('Team member image uploaded successfully', { imageUrl });
+    } catch (error) {
+      console.log(`❌ [AboutUs] Error in uploadTeamMemberImage:`, error);
+      throw error;
+    }
   }
 
   /**
@@ -79,8 +121,29 @@ export class AboutUsController {
   @Post('upload-section-image')
   @UseInterceptors(FileUploadInterceptor)
   async uploadSectionImage(@UploadedFile() file: Express.Multer.File) {
-    const imageUrl = await this.aboutUsService.uploadSectionImage(file);
-    return new AdminSuccessResponse('Section image uploaded successfully', { imageUrl });
+    console.log(`🔍 [AboutUs] uploadSectionImage called`);
+    console.log(`📁 [AboutUs] File received:`, {
+      exists: !!file,
+      originalname: file?.originalname,
+      mimetype: file?.mimetype,
+      size: file?.size,
+      fieldname: file?.fieldname
+    });
+
+    if (!file) {
+      console.log(`❌ [AboutUs] No file uploaded`);
+      throw new BadRequestException('No file uploaded. Please select an image file.');
+    }
+    
+    try {
+      console.log(`🔄 [AboutUs] Starting S3 upload for section image`);
+      const imageUrl = await this.aboutUsService.uploadSectionImage(file);
+      console.log(`✅ [AboutUs] S3 upload successful: ${imageUrl}`);
+      return new AdminSuccessResponse('Section image uploaded successfully', { imageUrl });
+    } catch (error) {
+      console.log(`❌ [AboutUs] Error in uploadSectionImage:`, error);
+      throw error;
+    }
   }
 
   // ==================== SECTION ENDPOINTS ====================
@@ -134,11 +197,32 @@ export class AboutUsController {
   @Post('sections/:id/upload-image')
   @UseInterceptors(FileUploadInterceptor)
   async uploadSectionImageById(@Param('id') id: string, @UploadedFile() file: Express.Multer.File) {
+    console.log(`🔍 [AboutUs] uploadSectionImageById called with id: ${id}`);
+    console.log(`📁 [AboutUs] File received:`, {
+      exists: !!file,
+      originalname: file?.originalname,
+      mimetype: file?.mimetype,
+      size: file?.size,
+      fieldname: file?.fieldname
+    });
+
+    if (!file) {
+      console.log(`❌ [AboutUs] No file uploaded`);
+      throw new BadRequestException('No file uploaded. Please select an image file.');
+    }
+    
     try {
+      console.log(`🔄 [AboutUs] Starting S3 upload for section ${id}`);
       const imageUrl = await this.aboutUsService.uploadSectionImage(file);
+      console.log(`✅ [AboutUs] S3 upload successful: ${imageUrl}`);
+      
+      console.log(`🔄 [AboutUs] Updating section ${id} with image URL`);
       await this.aboutUsService.updateSection(id, { image: imageUrl });
+      console.log(`✅ [AboutUs] Section updated successfully`);
+      
       return new AdminSuccessResponse('Section image uploaded successfully', { imageUrl });
     } catch (error) {
+      console.log(`❌ [AboutUs] Error in uploadSectionImageById:`, error);
       throw error;
     }
   }
@@ -194,11 +278,32 @@ export class AboutUsController {
   @Post('team-members/:id/upload-image')
   @UseInterceptors(FileUploadInterceptor)
   async uploadTeamMemberImageById(@Param('id') id: string, @UploadedFile() file: Express.Multer.File) {
+    console.log(`🔍 [AboutUs] uploadTeamMemberImageById called with id: ${id}`);
+    console.log(`📁 [AboutUs] File received:`, {
+      exists: !!file,
+      originalname: file?.originalname,
+      mimetype: file?.mimetype,
+      size: file?.size,
+      fieldname: file?.fieldname
+    });
+
+    if (!file) {
+      console.log(`❌ [AboutUs] No file uploaded`);
+      throw new BadRequestException('No file uploaded. Please select an image file.');
+    }
+    
     try {
+      console.log(`🔄 [AboutUs] Starting S3 upload for team member ${id}`);
       const imageUrl = await this.aboutUsService.uploadTeamMemberImage(file);
+      console.log(`✅ [AboutUs] S3 upload successful: ${imageUrl}`);
+      
+      console.log(`🔄 [AboutUs] Updating team member ${id} with image URL`);
       await this.aboutUsService.updateTeamMember(id, { image: imageUrl });
+      console.log(`✅ [AboutUs] Team member updated successfully`);
+      
       return new AdminSuccessResponse('Team member image uploaded successfully', { imageUrl });
     } catch (error) {
+      console.log(`❌ [AboutUs] Error in uploadTeamMemberImageById:`, error);
       throw error;
     }
   }

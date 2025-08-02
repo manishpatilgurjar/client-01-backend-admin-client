@@ -76,7 +76,34 @@ export class AboutUsService {
    * Upload main about us image
    */
   async uploadMainImage(file: Express.Multer.File): Promise<string> {
-    return await this.s3UploadService.uploadFile(file, 'about-main');
+    console.log(`🔍 [AboutUsService] uploadMainImage called`);
+    console.log(`📁 [AboutUsService] File details:`, {
+      originalname: file?.originalname,
+      mimetype: file?.mimetype,
+      size: file?.size,
+      fieldname: file?.fieldname,
+      buffer: file?.buffer ? 'Buffer exists' : 'No buffer'
+    });
+
+    if (!file) {
+      console.log(`❌ [AboutUsService] File is null/undefined`);
+      throw new Error('File is required for upload');
+    }
+
+    if (!file.buffer) {
+      console.log(`❌ [AboutUsService] File buffer is missing`);
+      throw new Error('File buffer is required for upload');
+    }
+
+    try {
+      console.log(`🔄 [AboutUsService] Calling S3 upload service for main image`);
+      const result = await this.s3UploadService.uploadFile(file, 'about-main');
+      console.log(`✅ [AboutUsService] S3 upload successful: ${result}`);
+      return result;
+    } catch (error) {
+      console.log(`❌ [AboutUsService] S3 upload failed:`, error);
+      throw error;
+    }
   }
 
   /**
@@ -102,14 +129,68 @@ export class AboutUsService {
    * Upload team member image
    */
   async uploadTeamMemberImage(file: Express.Multer.File): Promise<string> {
-    return await this.s3UploadService.uploadFile(file, 'team-members');
+    console.log(`🔍 [AboutUsService] uploadTeamMemberImage called`);
+    console.log(`📁 [AboutUsService] File details:`, {
+      originalname: file?.originalname,
+      mimetype: file?.mimetype,
+      size: file?.size,
+      fieldname: file?.fieldname,
+      buffer: file?.buffer ? 'Buffer exists' : 'No buffer'
+    });
+
+    if (!file) {
+      console.log(`❌ [AboutUsService] File is null/undefined`);
+      throw new Error('File is required for upload');
+    }
+
+    if (!file.buffer) {
+      console.log(`❌ [AboutUsService] File buffer is missing`);
+      throw new Error('File buffer is required for upload');
+    }
+
+    try {
+      console.log(`🔄 [AboutUsService] Calling S3 upload service for team member image`);
+      const result = await this.s3UploadService.uploadFile(file, 'team-members');
+      console.log(`✅ [AboutUsService] S3 upload successful: ${result}`);
+      return result;
+    } catch (error) {
+      console.log(`❌ [AboutUsService] S3 upload failed:`, error);
+      throw error;
+    }
   }
 
   /**
    * Upload section image
    */
   async uploadSectionImage(file: Express.Multer.File): Promise<string> {
-    return await this.s3UploadService.uploadFile(file, 'about-sections');
+    console.log(`🔍 [AboutUsService] uploadSectionImage called`);
+    console.log(`📁 [AboutUsService] File details:`, {
+      originalname: file?.originalname,
+      mimetype: file?.mimetype,
+      size: file?.size,
+      fieldname: file?.fieldname,
+      buffer: file?.buffer ? 'Buffer exists' : 'No buffer'
+    });
+
+    if (!file) {
+      console.log(`❌ [AboutUsService] File is null/undefined`);
+      throw new Error('File is required for upload');
+    }
+
+    if (!file.buffer) {
+      console.log(`❌ [AboutUsService] File buffer is missing`);
+      throw new Error('File buffer is required for upload');
+    }
+
+    try {
+      console.log(`🔄 [AboutUsService] Calling S3 upload service`);
+      const result = await this.s3UploadService.uploadFile(file, 'about-sections');
+      console.log(`✅ [AboutUsService] S3 upload successful: ${result}`);
+      return result;
+    } catch (error) {
+      console.log(`❌ [AboutUsService] S3 upload failed:`, error);
+      throw error;
+    }
   }
 
   /**
