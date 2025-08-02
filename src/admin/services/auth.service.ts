@@ -242,12 +242,17 @@ export class AuthService {
     );
 
     // Send login notification email to the admin
-    this.mailService.sendLoginNotification(
-      user.email,
-      dto.deviceData || {},
-      dto.location,
-      dto.ipAddress
-    );
+    try {
+      await this.mailService.sendLoginNotification(
+        user.email,
+        dto.deviceData || {},
+        dto.location,
+        dto.ipAddress
+      );
+    } catch (error) {
+      console.error('Failed to send login notification email:', error);
+      // Don't throw the error to prevent application crashes
+    }
 
     // Return tokens and user info
     return {

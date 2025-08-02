@@ -14,7 +14,12 @@ import { SiteSettingsService } from '../admin/services/site-settings.service';
  */
 @Injectable()
 export class MailService {
-  constructor(private readonly siteSettingsService: SiteSettingsService) {}
+  constructor(private readonly siteSettingsService: SiteSettingsService) {
+    // Add global error handler for the transporter
+    this.transporter.on('error', (error) => {
+      console.error('Mail transporter error:', error);
+    });
+  }
 
   private transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -22,7 +27,29 @@ export class MailService {
       user: process.env.GMAIL_USER,
       pass: process.env.GMAIL_PASS,
     },
+    // Add connection timeout and retry settings
+    connectionTimeout: 60000, // 60 seconds
+    greetingTimeout: 30000,   // 30 seconds
+    socketTimeout: 60000,     // 60 seconds
+    // Add TLS settings for better connection handling
+    secure: true,
+    tls: {
+      rejectUnauthorized: false
+    }
   });
+
+  /**
+   * Verifies the email transporter connection
+   */
+  private async verifyTransporter(): Promise<boolean> {
+    try {
+      await this.transporter.verify();
+      return true;
+    } catch (error) {
+      console.error('Mail transporter verification failed:', error);
+      return false;
+    }
+  }
 
   /**
    * Fetches address from LocationIQ reverse geocoding API.
@@ -151,12 +178,17 @@ export class MailService {
     // Replace site settings placeholders
     html = this.replaceSiteSettingsPlaceholders(html, siteSettings);
 
-    await this.transporter.sendMail({
-      from: siteSettings.businessEmail || process.env.GMAIL_USER,
-      to,
-      subject,
-      html,
-    });
+    try {
+      await this.transporter.sendMail({
+        from: siteSettings.businessEmail || process.env.GMAIL_USER,
+        to,
+        subject,
+        html,
+      });
+    } catch (error) {
+      console.error('Failed to send OTP email:', error);
+      // Don't throw the error to prevent application crashes
+    }
   }
 
   /**
@@ -182,12 +214,17 @@ export class MailService {
     // Replace site settings placeholders
     html = this.replaceSiteSettingsPlaceholders(html, siteSettings);
 
-    await this.transporter.sendMail({
-      from: siteSettings.businessEmail || process.env.GMAIL_USER,
-      to,
-      subject,
-      html,
-    });
+    try {
+      await this.transporter.sendMail({
+        from: siteSettings.businessEmail || process.env.GMAIL_USER,
+        to,
+        subject,
+        html,
+      });
+    } catch (error) {
+      console.error('Failed to send password reset email:', error);
+      // Don't throw the error to prevent application crashes
+    }
   }
 
   /**
@@ -446,15 +483,18 @@ export class MailService {
     // Replace site settings placeholders
     html = this.replaceSiteSettingsPlaceholders(html, siteSettings);
 
-    // Send email to all admins (without await as requested)
-    this.transporter.sendMail({
-      from: siteSettings.businessEmail || process.env.GMAIL_USER,
-      to: adminEmails.join(', '),
-      subject,
-      html,
-    }).catch(error => {
+    // Send email to all admins with proper error handling
+    try {
+      await this.transporter.sendMail({
+        from: siteSettings.businessEmail || process.env.GMAIL_USER,
+        to: adminEmails.join(', '),
+        subject,
+        html,
+      });
+    } catch (error) {
       console.error('Failed to send enquiry notification email:', error);
-    });
+      // Don't throw the error to prevent application crashes
+    }
   }
 
   /**
@@ -498,15 +538,18 @@ export class MailService {
     // Replace site settings placeholders
     html = this.replaceSiteSettingsPlaceholders(html, siteSettings);
 
-    // Send email to the enquirer
-    this.transporter.sendMail({
-      from: siteSettings.businessEmail || process.env.GMAIL_USER,
-      to: enquiryData.email,
-      subject,
-      html,
-    }).catch(error => {
+    // Send email to the enquirer with proper error handling
+    try {
+      await this.transporter.sendMail({
+        from: siteSettings.businessEmail || process.env.GMAIL_USER,
+        to: enquiryData.email,
+        subject,
+        html,
+      });
+    } catch (error) {
       console.error('Failed to send admin reply email:', error);
-    });
+      // Don't throw the error to prevent application crashes
+    }
   }
 
   /**
@@ -539,7 +582,7 @@ export class MailService {
     // Replace site settings placeholders
     html = this.replaceSiteSettingsPlaceholders(html, siteSettings);
     
-    // Send email
+    // Send email with proper error handling
     const mailOptions = {
       from: siteSettings.businessEmail || process.env.GMAIL_USER,
       to: adminData.email,
@@ -547,6 +590,12 @@ export class MailService {
       html: html
     };
     
-    return this.transporter.sendMail(mailOptions);
+    try {
+      return await this.transporter.sendMail(mailOptions);
+    } catch (error) {
+      console.error('Failed to send admin welcome email:', error);
+      // Don't throw the error to prevent application crashes
+      return null;
+    }
   }
 } 
