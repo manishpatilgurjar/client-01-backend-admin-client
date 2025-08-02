@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Admin Panel</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #007bff;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #007bff;
+            margin: 0;
+            font-size: 28px;
+        }
+        .welcome-message {
+            font-size: 18px;
+            margin-bottom: 25px;
+            color: #2c3e50;
+        }
+        .credentials-box {
+            background-color: #f8f9fa;
+            border: 2px solid #007bff;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 25px 0;
+        }
+        .credentials-box h3 {
+            color: #007bff;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        .credential-item {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #ffffff;
+            border-radius: 5px;
+            border-left: 4px solid #28a745;
+        }
+        .credential-label {
+            font-weight: bold;
+            color: #495057;
+        }
+        .credential-value {
+            color: #007bff;
+            font-family: 'Courier New', monospace;
+            background-color: #e9ecef;
+            padding: 5px 10px;
+            border-radius: 3px;
+            margin-left: 10px;
+        }
+        .important-note {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .important-note h4 {
+            color: #856404;
+            margin-top: 0;
+        }
+        .steps {
+            background-color: #e7f3ff;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 25px 0;
+        }
+        .steps h3 {
+            color: #0056b3;
+            margin-top: 0;
+        }
+        .step {
+            margin: 15px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+        .step:before {
+            content: counter(step-counter);
+            counter-increment: step-counter;
+            background-color: #007bff;
+            color: white;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+        .steps {
+            counter-reset: step-counter;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+            color: #6c757d;
+            font-size: 14px;
+        }
+        .login-button {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .login-button:hover {
+            background-color: #0056b3;
+        }
+        .security-tips {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .security-tips h4 {
+            color: #155724;
+            margin-top: 0;
+        }
+        .security-tips ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .security-tips li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎉 Welcome to {{siteName}} Admin Panel!</h1>
+        </div>
+
+        <div class="welcome-message">
+            <p>Hello <strong>{{firstName}} {{lastName}}</strong>,</p>
+            <p>Welcome to the {{siteName}} admin panel! Your account has been successfully created by a super administrator.</p>
+        </div>
+
+        <div class="credentials-box">
+            <h3>🔐 Your Login Credentials</h3>
+            <div class="credential-item">
+                <span class="credential-label">Email:</span>
+                <span class="credential-value">{{email}}</span>
+            </div>
+            <div class="credential-item">
+                <span class="credential-label">Username:</span>
+                <span class="credential-value">{{username}}</span>
+            </div>
+            <div class="credential-item">
+                <span class="credential-label">Password:</span>
+                <span class="credential-value">{{password}}</span>
+            </div>
+            <div class="credential-item">
+                <span class="credential-label">Role:</span>
+                <span class="credential-value">{{role}}</span>
+            </div>
+        </div>
+
+        <div class="important-note">
+            <h4>⚠️ Important Security Notice</h4>
+            <p><strong>Please change your password immediately after your first login for security purposes.</strong></p>
+        </div>
+
+        <div class="steps">
+            <h3>🚀 Getting Started</h3>
+            <div class="step">
+                <strong>Login to Admin Panel:</strong> Use the credentials above to access the admin panel at <a href="{{siteUrl}}/admin" style="color: #007bff;">{{siteUrl}}/admin</a>
+            </div>
+            <div class="step">
+                <strong>Change Your Password:</strong> Go to your profile settings and update your password immediately
+            </div>
+            <div class="step">
+                <strong>Review Permissions:</strong> Check your assigned permissions and understand your role capabilities
+            </div>
+            <div class="step">
+                <strong>Explore Features:</strong> Familiarize yourself with the admin panel features and functionality
+            </div>
+        </div>
+
+        <div class="security-tips">
+            <h4>🔒 Security Best Practices</h4>
+            <ul>
+                <li>Use a strong, unique password (at least 8 characters with letters, numbers, and symbols)</li>
+                <li>Never share your login credentials with anyone</li>
+                <li>Log out when you're done using the admin panel</li>
+                <li>Enable two-factor authentication if available</li>
+                <li>Report any suspicious activity immediately</li>
+            </ul>
+        </div>
+
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{{siteUrl}}/admin" class="login-button">Login to Admin Panel</a>
+        </div>
+
+        <div class="footer">
+            <p><strong>{{siteName}}</strong></p>
+            <p>If you have any questions or need assistance, please contact the system administrator.</p>
+            <p>Email: {{businessEmail}} | Phone: {{contactNumber}}</p>
+            <p>This is an automated message. Please do not reply to this email.</p>
+        </div>
+    </div>
+</body>
+</html> 

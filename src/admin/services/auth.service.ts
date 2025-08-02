@@ -23,27 +23,58 @@ export class AuthService {
    * Throws UnauthorizedException on failure.
    */
   async login(dto: AdminLoginDto): Promise<AdminLoginResponseDto | AdminLoginStep1ResponseDto> {
-    // 1. Find the admin user by email only
+    console.log('🔍 [LOGIN] Starting login process...');
+    console.log('📧 [LOGIN] Email received:', dto.email);
+    console.log('🔐 [LOGIN] Password received:', dto.password ? '***' : 'NOT PROVIDED');
+    console.log('📱 [LOGIN] Device data:', dto.deviceData);
+    console.log('🌐 [LOGIN] IP address:', dto.ipAddress);
+    console.log('📍 [LOGIN] Location:', dto.location);
+
+    // 1. Find the admin user by email only (accept both admin and super_admin roles)
+    console.log('🔍 [LOGIN] Searching for user with email:', dto.email);
+    console.log('🎭 [LOGIN] Looking for roles: admin, super_admin');
+    
     const user = await AdminUserModel.findOne({
       email: dto.email,
-      role: 'admin',
+      role: { $in: ['admin', 'super_admin'] },
     });
+    
+    console.log('👤 [LOGIN] User found:', user ? 'YES' : 'NO');
+    if (user) {
+      console.log('🆔 [LOGIN] User ID:', user._id);
+      console.log('👤 [LOGIN] Username:', user.username);
+      console.log('🎭 [LOGIN] User role:', user.role);
+      console.log('✅ [LOGIN] User active:', user.isActive);
+      console.log('🔐 [LOGIN] 2FA enabled:', user.twoFactorEnabled);
+    }
+    
     if (!user) {
+      console.log('❌ [LOGIN] User not found - throwing UnauthorizedException');
       // If user not found, throw error
       throw new UnauthorizedException(AdminMessages.LOGIN_INVALID_CREDENTIALS);
     }
     // 2. Check the password using bcrypt
+    console.log('🔐 [LOGIN] Checking password...');
     const isMatch = await bcrypt.compare(dto.password, user.password);
+    console.log('🔐 [LOGIN] Password match:', isMatch ? 'YES' : 'NO');
+    
     if (!isMatch) {
+      console.log('❌ [LOGIN] Password does not match - throwing UnauthorizedException');
       // If password does not match, throw error
       throw new UnauthorizedException(AdminMessages.LOGIN_INVALID_CREDENTIALS);
     }
 
     // 3. Check if 2FA is enabled
+    console.log('🔐 [LOGIN] Checking 2FA status...');
+    console.log('🔐 [LOGIN] 2FA enabled:', user.twoFactorEnabled);
+    
     if (user.twoFactorEnabled) {
+      console.log('📱 [LOGIN] 2FA is enabled - generating OTP...');
       // Generate OTP for 2FA
       const otp = this.generateOTP();
+      console.log('📱 [LOGIN] OTP generated:', otp);
       const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+      console.log('⏰ [LOGIN] OTP expires at:', otpExpiresAt);
 
       // Store login data temporarily with OTP for later use
       const loginData = {
@@ -64,15 +95,19 @@ export class AuthService {
       });
 
       // Send OTP email for 2FA login
-       this.mailService.sendOTPEmail(user.email, otp, 'Login Verification');
+      console.log('📧 [LOGIN] Sending OTP email to:', user.email);
+      this.mailService.sendOTPEmail(user.email, otp, 'Login Verification');
 
       // Generate temporary token for 2FA verification
+      console.log('🔑 [LOGIN] Generating temporary token for 2FA...');
       const tempToken = jwt.sign(
         { id: user._id, role: user.role, requires2FA: true },
         process.env.JWT_SECRET || 'secret',
         { expiresIn: '10m' }
       );
+      console.log('🔑 [LOGIN] Temporary token generated:', tempToken ? 'YES' : 'NO');
 
+      console.log('✅ [LOGIN] Returning 2FA response');
       return {
         requiresOTP: true,
         message: 'OTP sent to your email for two-factor authentication',
@@ -81,6 +116,8 @@ export class AuthService {
     }
 
     // 4. Proceed with normal login (2FA disabled)
+    console.log('✅ [LOGIN] 2FA is disabled - proceeding with normal login');
+    console.log('🔄 [LOGIN] Calling completeLogin method...');
     return this.completeLogin(user, dto);
   }
 
@@ -210,15 +247,24 @@ export class AuthService {
    * Complete login process (extracted from original login method)
    */
   private async completeLogin(user: any, dto: any): Promise<AdminLoginResponseDto> {
+    console.log('🔄 [COMPLETE_LOGIN] Starting complete login process...');
+    console.log('👤 [COMPLETE_LOGIN] User ID:', user._id);
+    console.log('🎭 [COMPLETE_LOGIN] User role:', user.role);
+    
     // Generate refresh token (long-lived, e.g. 7 days)
+    console.log('🔑 [COMPLETE_LOGIN] Generating refresh token...');
     const refreshToken: string = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_REFRESH_SECRET || 'refreshsecret',
       { expiresIn: '7d' }
     );
+    console.log('🔑 [COMPLETE_LOGIN] Refresh token generated:', refreshToken ? 'YES' : 'NO');
 
     // Save refresh token in DB for future validation and revocation
+    console.log('💾 [COMPLETE_LOGIN] Saving refresh token to database...');
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
+    console.log('⏰ [COMPLETE_LOGIN] Token expires at:', expiresAt);
+    
     const refreshTokenDoc = await RefreshTokenModel.create({
       userId: user._id,
       token: refreshToken,
@@ -227,15 +273,19 @@ export class AuthService {
       ipAddress: dto.ipAddress,
       location: dto.location,
     });
+    console.log('💾 [COMPLETE_LOGIN] Refresh token saved to DB:', refreshTokenDoc._id);
 
     // Generate access token (short-lived, e.g. 15 minutes) with g_id
+    console.log('🔑 [COMPLETE_LOGIN] Generating access token...');
     const accessToken: string = jwt.sign(
       { id: user._id, role: user.role, g_id: refreshTokenDoc._id },
       process.env.JWT_SECRET || 'secret',
       { expiresIn: '15m' }
     );
+    console.log('🔑 [COMPLETE_LOGIN] Access token generated:', accessToken ? 'YES' : 'NO');
 
     // Send login notification email to the admin
+    console.log('📧 [COMPLETE_LOGIN] Sending login notification email...');
     this.mailService.sendLoginNotification(
       user.email,
       dto.deviceData || {},
@@ -244,6 +294,11 @@ export class AuthService {
     );
 
     // Return tokens and user info
+    console.log('✅ [COMPLETE_LOGIN] Login successful - returning response');
+    console.log('👤 [COMPLETE_LOGIN] Final user role:', user.role);
+    console.log('🔑 [COMPLETE_LOGIN] Access token length:', accessToken.length);
+    console.log('🔑 [COMPLETE_LOGIN] Refresh token length:', refreshToken.length);
+    
     return {
       accessToken,
       refreshToken,

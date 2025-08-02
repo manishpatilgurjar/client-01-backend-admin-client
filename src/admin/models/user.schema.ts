@@ -35,7 +35,7 @@ const AdminUserSchema = new Schema<AdminUser>({
   username: { type: String, required: true, unique: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  role: { type: String, default: 'admin', immutable: true },
+  role: { type: String, enum: ['super_admin', 'admin'], default: 'admin' },
   firstName: { type: String },
   lastName: { type: String },
   profilePic: { type: String },

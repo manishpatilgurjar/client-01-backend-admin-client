@@ -23,6 +23,10 @@ import { EncryptionService } from '../common/services/encryption.service';
 import { ContactController } from './controllers/contact.controller';
 import { EnquiryController } from './controllers/enquiry.controller';
 import { EnquiryService } from './services/enquiry.service';
+import { SiteSettingsController } from './controllers/site-settings.controller';
+import { SiteSettingsService } from './services/site-settings.service';
+import { AdminManagementController } from './controllers/admin-management.controller';
+import { AdminManagementService } from './services/admin-management.service';
 
 /**
  * AdminModule bundles all admin-related controllers and services.
@@ -39,7 +43,9 @@ import { EnquiryService } from './services/enquiry.service';
     IndexPageController, 
     DashboardController,
     ContactController,
-    EnquiryController
+    EnquiryController,
+    SiteSettingsController,
+    AdminManagementController
   ],
   providers: [
     AuthService, 
@@ -54,7 +60,9 @@ import { EnquiryService } from './services/enquiry.service';
     ActivityLogService, 
     S3UploadService,
     EnquiryService,
-    EncryptionService
+    EncryptionService,
+    SiteSettingsService,
+    AdminManagementService
   ],
   exports: [AuthService],
 })
@@ -69,7 +77,9 @@ export class AdminModule {
       'admin/faqs', 
       'admin/index-page', 
       'admin/dashboard',
-      'admin/enquiries'
+      'admin/enquiries',
+      'admin/site-settings',
+      'admin/admin-management'
     );
   }
 } 

@@ -13,7 +13,7 @@ export class DashboardService {
   /**
    * Get comprehensive dashboard data
    */
-  async getDashboardData(): Promise<DashboardResponse> {
+  async getDashboardData(currentUserRole?: string): Promise<DashboardResponse> {
     // Get actual data from database
     const [
       totalPages,
@@ -26,7 +26,7 @@ export class DashboardService {
       this.getTotalProducts(),
       this.getPublishedProducts(),
       this.getDraftProducts(),
-      this.getRecentActivity()
+      this.getRecentActivity(currentUserRole)
     ]);
 
     // Dummy data for features not yet implemented
@@ -106,10 +106,10 @@ export class DashboardService {
   /**
    * Get recent activity (actual data from activity log)
    */
-  private async getRecentActivity(): Promise<RecentActivity[]> {
+  private async getRecentActivity(currentUserRole?: string): Promise<RecentActivity[]> {
     try {
       // Get recent activities from activity log - limit to 8 records
-      const activities = await this.activityLogService.getRecentActivities(7);
+      const activities = await this.activityLogService.getRecentActivities(7, currentUserRole);
       
       // If no activities in log, generate some from recent data
       if (activities.length === 0) {

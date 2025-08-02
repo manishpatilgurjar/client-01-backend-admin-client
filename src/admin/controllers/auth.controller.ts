@@ -27,13 +27,34 @@ export class AuthController {
   @Post('login')
   @HttpCode(200)
   async login(@Body() dto: AdminLoginDto): Promise<AdminSuccessResponse | AdminErrorResponse> {
-    const result = await this.authService.login(dto);
-    // If the result is an error, return it directly
-    if (result instanceof AdminErrorResponse) {
-      return result;
+    console.log('🚀 [CONTROLLER] Login request received');
+    console.log('📧 [CONTROLLER] Email:', dto.email);
+    console.log('🔐 [CONTROLLER] Password provided:', dto.password ? 'YES' : 'NO');
+    console.log('📱 [CONTROLLER] Device data:', dto.deviceData);
+    
+    try {
+      console.log('🔄 [CONTROLLER] Calling auth service...');
+      const result = await this.authService.login(dto);
+      console.log('✅ [CONTROLLER] Auth service returned result');
+      console.log('📋 [CONTROLLER] Result type:', typeof result);
+      console.log('📋 [CONTROLLER] Result keys:', Object.keys(result));
+      
+      // If the result is an error, return it directly
+      if (result instanceof AdminErrorResponse) {
+        console.log('❌ [CONTROLLER] Returning error response');
+        return result;
+      }
+      
+      // Otherwise, return a standardized success response
+      console.log('✅ [CONTROLLER] Creating success response');
+      const response = new AdminSuccessResponse(AdminMessages.LOGIN_SUCCESS, result);
+      console.log('✅ [CONTROLLER] Success response created');
+      return response;
+    } catch (error) {
+      console.log('❌ [CONTROLLER] Error in login:', error.message);
+      console.log('❌ [CONTROLLER] Error stack:', error.stack);
+      throw error;
     }
-    // Otherwise, return a standardized success response
-    return new AdminSuccessResponse(AdminMessages.LOGIN_SUCCESS, result);
   }
 
   /**
@@ -66,7 +87,7 @@ export class AuthController {
    * POST /admin/auth/verify-2fa
    * Verifies 2FA OTP and completes login process.
    * @param dto - AdminLoginWithOTPDto containing the OTP
-   * @param tempToken - Temporary token from step 1 login
+   * @param tempToken - Temporary token from step 1 login (in Authorization header)
    * @returns AdminSuccessResponse with tokens and user info
    */
   @Post('verify-2fa')

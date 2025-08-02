@@ -14,6 +14,7 @@ export class ActivityLogService {
     entityName?: string;
     userId?: string;
     userEmail?: string;
+    userRole?: string; // Add user role parameter
     details?: string;
     type: 'create' | 'update' | 'delete' | 'status' | 'system' | 'edit';
   }) {
@@ -159,33 +160,69 @@ export class ActivityLogService {
   }
 
   /**
-   * Get recent activities
+   * Get recent activities with role-based filtering
+   * Super admins can see all activities, regular admins cannot see super admin activities
    */
-  async getRecentActivities(limit: number = 10) {
+  async getRecentActivities(limit: number = 10, currentUserRole?: string) {
+    let query = {};
+    
+    // If current user is not a super admin, exclude super admin activities
+    if (currentUserRole && currentUserRole !== 'super_admin') {
+      query = {
+        $or: [
+          { userRole: { $ne: 'super_admin' } }, // Not performed by super admin
+          { userRole: { $exists: false } }, // No role specified (legacy data)
+          { userRole: null } // Null role
+        ]
+      };
+    }
+    
     return ActivityLogModel
-      .find()
+      .find(query)
       .sort({ timestamp: -1 })
       .limit(limit)
       .lean();
   }
 
   /**
-   * Get activities by entity
+   * Get activities by entity with role-based filtering
    */
-  async getActivitiesByEntity(entity: string, limit: number = 10) {
+  async getActivitiesByEntity(entity: string, limit: number = 10, currentUserRole?: string) {
+    let query: any = { entity };
+    
+    // If current user is not a super admin, exclude super admin activities
+    if (currentUserRole && currentUserRole !== 'super_admin') {
+      query.$or = [
+        { userRole: { $ne: 'super_admin' } },
+        { userRole: { $exists: false } },
+        { userRole: null }
+      ];
+    }
+    
     return ActivityLogModel
-      .find({ entity })
+      .find(query)
       .sort({ timestamp: -1 })
       .limit(limit)
       .lean();
   }
 
   /**
-   * Get activities by type
+   * Get activities by type with role-based filtering
    */
-  async getActivitiesByType(type: 'create' | 'update' | 'delete' | 'status' | 'system' | 'edit', limit: number = 10) {
+  async getActivitiesByType(type: 'create' | 'update' | 'delete' | 'status' | 'system' | 'edit', limit: number = 10, currentUserRole?: string) {
+    let query: any = { type };
+    
+    // If current user is not a super admin, exclude super admin activities
+    if (currentUserRole && currentUserRole !== 'super_admin') {
+      query.$or = [
+        { userRole: { $ne: 'super_admin' } },
+        { userRole: { $exists: false } },
+        { userRole: null }
+      ];
+    }
+    
     return ActivityLogModel
-      .find({ type })
+      .find(query)
       .sort({ timestamp: -1 })
       .limit(limit)
       .lean();

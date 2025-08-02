@@ -7,6 +7,7 @@ export interface ActivityLog extends Document {
   entityName?: string;
   userId?: string;
   userEmail?: string;
+  userRole?: string; // Add user role to track who performed the action
   details?: string;
   timestamp: Date;
   type: 'create' | 'update' | 'delete' | 'status' | 'system' | 'edit';
@@ -19,6 +20,7 @@ const ActivityLogSchema = new Schema<ActivityLog>({
   entityName: { type: String },
   userId: { type: String },
   userEmail: { type: String },
+  userRole: { type: String }, // Add user role field
   details: { type: String },
   timestamp: { type: Date, required: true, default: Date.now },
   type: { 

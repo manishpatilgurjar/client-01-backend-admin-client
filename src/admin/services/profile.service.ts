@@ -437,7 +437,7 @@ export class ProfileService {
    * Get first admin user (for testing purposes)
    */
   async getFirstAdminUser() {
-    return AdminUserModel.findOne({ role: 'admin' });
+    return AdminUserModel.findOne({ role: { $in: ['admin', 'super_admin'] } });
   }
 
   /**

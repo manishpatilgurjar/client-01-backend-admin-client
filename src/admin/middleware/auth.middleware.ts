@@ -15,10 +15,18 @@ const jwt = require('jsonwebtoken');
 @Injectable()
 export class AdminAuthMiddleware implements NestMiddleware {
   async use(req: Request, res: Response, next: NextFunction) {
+    console.log('🔍 [MIDDLEWARE] Request received');
+    console.log('🌐 [MIDDLEWARE] URL:', req.url);
+    console.log('📋 [MIDDLEWARE] Method:', req.method);
+    console.log('📋 [MIDDLEWARE] Headers:', Object.keys(req.headers));
+    
     try {
       // 1. Check for Authorization header
       const authHeader = req.headers['authorization'];
+      console.log('🔑 [MIDDLEWARE] Authorization header:', authHeader ? 'PRESENT' : 'MISSING');
+      
       if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        console.log('❌ [MIDDLEWARE] Missing or invalid Authorization header');
         throw new UnauthorizedException(AdminMessages.LOGIN_MISSING_AUTH_HEADER);
       }
       const token = authHeader.split(' ')[1];
@@ -32,9 +40,9 @@ export class AdminAuthMiddleware implements NestMiddleware {
       } catch (err) {
         throw new UnauthorizedException(AdminMessages.LOGIN_INVALID_TOKEN);
       }
-      // 3. Validate user existence and role
+      // 3. Validate user existence and role (accept both admin and super_admin)
       const user = await AdminUserModel.findById(payload.id);
-      if (!user || user.role !== 'admin') {
+      if (!user || !['admin', 'super_admin'].includes(user.role)) {
         throw new ForbiddenException(AdminMessages.LOGIN_USER_NOT_FOUND);
       }
       // 4. Attach user info to request for downstream use

@@ -1,6 +1,7 @@
 import { 
   Controller, 
-  Get
+  Get,
+  Req
 } from '@nestjs/common';
 import { DashboardService } from '../services/dashboard.service';
 import { AdminSuccessResponse } from '../enums/response';
@@ -15,14 +16,14 @@ export class DashboardController {
    * Get comprehensive dashboard data with all statistics, activity, and system health
    */
   @Get()
-  async getDashboard() {
+  async getDashboard(@Req() req: any) {
     const [
       dashboardData,
       productStats,
       recentProducts,
       systemHealth
     ] = await Promise.all([
-      this.dashboardService.getDashboardData(),
+      this.dashboardService.getDashboardData(req.user?.role),
       this.dashboardService.getProductStats(),
       this.dashboardService.getRecentProducts(5),
       this.dashboardService.getSystemHealth()

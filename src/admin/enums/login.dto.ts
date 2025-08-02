@@ -1,14 +1,27 @@
-import { IsString, IsNotEmpty, MinLength, MaxLength } from 'class-validator';
+import { IsString, IsNotEmpty, MinLength, MaxLength, IsOptional } from 'class-validator';
 
 /**
  * DTO for admin login requests.
  * Accepts only email and a password, plus device/session info.
  */
 export class AdminLoginDto {
+  @IsString()
+  @IsNotEmpty({ message: 'Email is required' })
   email: string;
+
+  @IsString()
+  @IsNotEmpty({ message: 'Password is required' })
+  @MinLength(1, { message: 'Password cannot be empty' })
   password: string;
+
+  @IsOptional()
   deviceData?: Record<string, any>;
+
+  @IsOptional()
+  @IsString()
   ipAddress?: string;
+
+  @IsOptional()
   location?: {
     latitude: number;
     longitude: number;
@@ -20,6 +33,8 @@ export class AdminLoginDto {
  * Contains the refresh token string.
  */
 export class RefreshTokenRequestDto {
+  @IsString()
+  @IsNotEmpty({ message: 'Refresh token is required' })
   refreshToken: string;
 }
 
@@ -62,5 +77,7 @@ export class AdminLoginStep1ResponseDto {
  * Contains the access token for logout.
  */
 export class LogoutRequestDto {
+  @IsString()
+  @IsNotEmpty({ message: 'Access token is required' })
   accessToken: string;
 } 

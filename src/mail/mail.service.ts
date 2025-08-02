@@ -3,6 +3,7 @@ const nodemailer = require('nodemailer');
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import fetch from 'node-fetch';
+import { SiteSettingsService } from '../admin/services/site-settings.service';
 
 /**
  * Service for sending emails using Google SMTP.
@@ -13,6 +14,8 @@ import fetch from 'node-fetch';
  */
 @Injectable()
 export class MailService {
+  constructor(private readonly siteSettingsService: SiteSettingsService) {}
+
   private transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -48,6 +51,36 @@ export class MailService {
   }
 
   /**
+   * Gets site settings for email templates
+   */
+  private async getSiteSettingsForEmail() {
+    try {
+      return await this.siteSettingsService.getEmailSettings();
+    } catch (error) {
+      // Fallback to default values if site settings are not available
+      return {
+        siteName: 'Your Company',
+        siteUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
+        businessEmail: process.env.GMAIL_USER || 'info@yourcompany.com',
+        contactNumber: '+1234567890',
+        businessAddress: 'Your Business Address'
+      };
+    }
+  }
+
+  /**
+   * Replaces site settings placeholders in email templates
+   */
+  private replaceSiteSettingsPlaceholders(html: string, siteSettings: any): string {
+    return html
+      .replace(/{{siteName}}/g, siteSettings.siteName || 'Your Company')
+      .replace(/{{siteUrl}}/g, siteSettings.siteUrl || 'http://localhost:3000')
+      .replace(/{{businessEmail}}/g, siteSettings.businessEmail || 'info@yourcompany.com')
+      .replace(/{{contactNumber}}/g, siteSettings.contactNumber || '+1234567890')
+      .replace(/{{businessAddress}}/g, siteSettings.businessAddress || 'Your Business Address');
+  }
+
+  /**
    * Sends a login notification email to the admin using a template.
    * @param to - Recipient email address
    * @param deviceData - Object with device details
@@ -59,6 +92,10 @@ export class MailService {
     // Use process.cwd() to resolve the template path from the project root
     const templatePath = join(process.cwd(), 'src', 'mail', 'templates', 'login-notification.html');
     let html = readFileSync(templatePath, 'utf8');
+    
+    // Get site settings
+    const siteSettings = await this.getSiteSettingsForEmail();
+    
     // Prepare values
     const device = deviceData ? JSON.stringify(deviceData) : 'Unknown';
     let locationStr = 'Unknown';
@@ -72,13 +109,18 @@ export class MailService {
       }
     }
     const ip = ipAddress || 'Unknown';
+    
     // Replace placeholders
     html = html.replace('{{device}}', device)
                .replace('{{location}}', locationStr)
                .replace('{{ipAddress}}', ip)
                .replace('{{mapImage}}', mapImg);
+    
+    // Replace site settings placeholders
+    html = this.replaceSiteSettingsPlaceholders(html, siteSettings);
+    
     await this.transporter.sendMail({
-      from: process.env.GMAIL_USER,
+      from: siteSettings.businessEmail || process.env.GMAIL_USER,
       to,
       subject,
       html,
@@ -94,6 +136,9 @@ export class MailService {
   async sendOTPEmail(to: string, otp: string, actionType: string = 'Password Change') {
     const subject = `${actionType} Verification`;
     
+    // Get site settings
+    const siteSettings = await this.getSiteSettingsForEmail();
+    
     // Use dedicated 2FA login template for login verification
     const templateName = actionType === 'Login Verification' ? '2fa-login-otp.html' : 'otp-email.html';
     const templatePath = join(process.cwd(), 'src', 'mail', 'templates', templateName);
@@ -102,9 +147,12 @@ export class MailService {
     // Replace placeholders
     html = html.replace(/{{otp}}/g, otp);
     html = html.replace(/{{actionType}}/g, actionType);
+    
+    // Replace site settings placeholders
+    html = this.replaceSiteSettingsPlaceholders(html, siteSettings);
 
     await this.transporter.sendMail({
-      from: process.env.GMAIL_USER,
+      from: siteSettings.businessEmail || process.env.GMAIL_USER,
       to,
       subject,
       html,
@@ -120,6 +168,9 @@ export class MailService {
   async sendPasswordResetEmail(to: string, token: string, otp: string) {
     const subject = 'Password Reset Request';
     
+    // Get site settings
+    const siteSettings = await this.getSiteSettingsForEmail();
+    
     // Read the template file
     const templatePath = join(process.cwd(), 'src', 'mail', 'templates', 'password-reset.html');
     let html = readFileSync(templatePath, 'utf8');
@@ -127,9 +178,12 @@ export class MailService {
     // Replace placeholders
     html = html.replace(/{{token}}/g, token);
     html = html.replace(/{{otp}}/g, otp);
+    
+    // Replace site settings placeholders
+    html = this.replaceSiteSettingsPlaceholders(html, siteSettings);
 
     await this.transporter.sendMail({
-      from: process.env.GMAIL_USER,
+      from: siteSettings.businessEmail || process.env.GMAIL_USER,
       to,
       subject,
       html,
@@ -146,6 +200,10 @@ export class MailService {
    */
   async sendPasswordChangeConfirmation(to: string, changedAt: Date, ipAddress?: string, userAgent?: string, sessionsDestroyed?: number) {
     const subject = 'Password Changed Successfully';
+    
+    // Get site settings
+    const siteSettings = await this.getSiteSettingsForEmail();
+    
     const formattedDate = changedAt.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
@@ -167,9 +225,12 @@ export class MailService {
     html = html.replace(/{{ipAddress}}/g, ipAddress || 'Not available');
     html = html.replace(/{{userAgent}}/g, userAgent || 'Not available');
     html = html.replace(/{{sessionsDestroyed}}/g, sessionsDestroyed?.toString() || '0');
+    
+    // Replace site settings placeholders
+    html = this.replaceSiteSettingsPlaceholders(html, siteSettings);
 
     await this.transporter.sendMail({
-      from: process.env.GMAIL_USER,
+      from: siteSettings.businessEmail || process.env.GMAIL_USER,
       to,
       subject,
       html,
@@ -185,6 +246,9 @@ export class MailService {
   async send2FASetupEmail(to: string, otp: string, actionType: string = '2FA Setup') {
     const subject = 'Two-Factor Authentication Setup';
     
+    // Get site settings
+    const siteSettings = await this.getSiteSettingsForEmail();
+    
     // Read the template file
     const templatePath = join(process.cwd(), 'src', 'mail', 'templates', '2fa-setup.html');
     let html = readFileSync(templatePath, 'utf8');
@@ -192,9 +256,12 @@ export class MailService {
     // Replace placeholders
     html = html.replace(/{{otp}}/g, otp);
     html = html.replace(/{{actionType}}/g, actionType);
+    
+    // Replace site settings placeholders
+    html = this.replaceSiteSettingsPlaceholders(html, siteSettings);
 
     await this.transporter.sendMail({
-      from: process.env.GMAIL_USER,
+      from: siteSettings.businessEmail || process.env.GMAIL_USER,
       to,
       subject,
       html,
@@ -211,6 +278,10 @@ export class MailService {
    */
   async send2FAStatusChangeEmail(to: string, enabled: boolean, changedAt: Date, ipAddress?: string, userAgent?: string) {
     const subject = enabled ? 'Two-Factor Authentication Enabled' : 'Two-Factor Authentication Disabled';
+    
+    // Get site settings
+    const siteSettings = await this.getSiteSettingsForEmail();
+    
     const formattedDate = changedAt.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
@@ -287,9 +358,12 @@ export class MailService {
     html = html.replace(/{{userAgentItem}}/g, userAgentItem);
     html = html.replace(/{{impactContainer}}/g, impactContainer);
     html = html.replace(/{{reEnableButton}}/g, reEnableButton);
+    
+    // Replace site settings placeholders
+    html = this.replaceSiteSettingsPlaceholders(html, siteSettings);
 
     await this.transporter.sendMail({
-      from: process.env.GMAIL_USER,
+      from: siteSettings.businessEmail || process.env.GMAIL_USER,
       to,
       subject,
       html,
@@ -313,6 +387,9 @@ export class MailService {
     createdAt: Date;
   }, adminEmails: string[]) {
     const subject = `New Enquiry: ${enquiryData.subject}`;
+    
+    // Get site settings
+    const siteSettings = await this.getSiteSettingsForEmail();
     
     // Read the template file
     const templatePath = join(process.cwd(), 'src', 'mail', 'templates', 'enquiry-notification.html');
@@ -365,10 +442,13 @@ export class MailService {
     html = html.replace(/{{phoneRow}}/g, phoneRow);
     html = html.replace(/{{ipAddressRow}}/g, ipAddressRow);
     html = html.replace(/{{starredIndicator}}/g, starredIndicator);
+    
+    // Replace site settings placeholders
+    html = this.replaceSiteSettingsPlaceholders(html, siteSettings);
 
     // Send email to all admins (without await as requested)
     this.transporter.sendMail({
-      from: process.env.GMAIL_USER,
+      from: siteSettings.businessEmail || process.env.GMAIL_USER,
       to: adminEmails.join(', '),
       subject,
       html,
@@ -391,6 +471,9 @@ export class MailService {
   }, adminReply: string, adminName: string) {
     const subject = `Re: ${enquiryData.subject}`;
     
+    // Get site settings
+    const siteSettings = await this.getSiteSettingsForEmail();
+    
     // Read the template file
     const templatePath = join(process.cwd(), 'src', 'mail', 'templates', 'enquiry-reply.html');
     let html = readFileSync(templatePath, 'utf8');
@@ -411,15 +494,59 @@ export class MailService {
     html = html.replace(/{{adminReply}}/g, adminReply);
     html = html.replace(/{{adminName}}/g, adminName);
     html = html.replace(/{{replyDate}}/g, replyDate);
+    
+    // Replace site settings placeholders
+    html = this.replaceSiteSettingsPlaceholders(html, siteSettings);
 
     // Send email to the enquirer
     this.transporter.sendMail({
-      from: process.env.GMAIL_USER,
+      from: siteSettings.businessEmail || process.env.GMAIL_USER,
       to: enquiryData.email,
       subject,
       html,
     }).catch(error => {
       console.error('Failed to send admin reply email:', error);
     });
+  }
+
+  /**
+   * Sends admin welcome email with credentials
+   */
+  async sendAdminWelcomeEmail(adminData: {
+    email: string;
+    username: string;
+    firstName: string;
+    lastName: string;
+    password: string;
+    role: string;
+  }) {
+    const subject = 'Welcome to Admin Panel - Your Account Details';
+    const templatePath = join(process.cwd(), 'src', 'mail', 'templates', 'admin-welcome.html');
+    let html = readFileSync(templatePath, 'utf8');
+    
+    // Get site settings
+    const siteSettings = await this.getSiteSettingsForEmail();
+    
+    // Replace placeholders
+    html = html
+      .replace(/{{firstName}}/g, adminData.firstName)
+      .replace(/{{lastName}}/g, adminData.lastName)
+      .replace(/{{email}}/g, adminData.email)
+      .replace(/{{username}}/g, adminData.username)
+      .replace(/{{password}}/g, adminData.password)
+      .replace(/{{role}}/g, adminData.role);
+    
+    // Replace site settings placeholders
+    html = this.replaceSiteSettingsPlaceholders(html, siteSettings);
+    
+    // Send email
+    const mailOptions = {
+      from: siteSettings.businessEmail || process.env.GMAIL_USER,
+      to: adminData.email,
+      subject: subject,
+      html: html
+    };
+    
+    return this.transporter.sendMail(mailOptions);
   }
 } 
