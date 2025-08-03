@@ -1,5 +1,6 @@
 import { Module, MiddlewareConsumer } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AuthController } from './controllers/auth.controller';
 import { AuthService } from './services/auth.service';
 import { MailService } from '../mail/mail.service';
@@ -32,6 +33,13 @@ import { CampaignController } from './controllers/campaign.controller';
 import { CampaignService } from './services/campaign.service';
 import { CampaignSchedulerService } from './services/campaign-scheduler.service';
 import { Campaign, CampaignSchema } from './models/campaign.schema';
+import { EmailTrackingService } from './services/email-tracking.service';
+import { EmailTracking, EmailTrackingSchema } from './models/email-tracking.schema';
+import { EmailRetryService } from './services/email-retry.service';
+import { EmailBounceService } from './services/email-bounce.service';
+import { EmailBounce, EmailBounceSchema } from './models/email-bounce.schema';
+import { SendGridService } from './services/sendgrid.service';
+import { WebhookController } from './controllers/webhook.controller';
 
 /**
  * AdminModule bundles all admin-related controllers and services.
@@ -39,8 +47,11 @@ import { Campaign, CampaignSchema } from './models/campaign.schema';
  */
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     MongooseModule.forFeature([
-      { name: Campaign.name, schema: CampaignSchema }
+      { name: Campaign.name, schema: CampaignSchema },
+      { name: EmailTracking.name, schema: EmailTrackingSchema },
+      { name: EmailBounce.name, schema: EmailBounceSchema }
     ])
   ],
   controllers: [
@@ -56,7 +67,8 @@ import { Campaign, CampaignSchema } from './models/campaign.schema';
     EnquiryController,
     SiteSettingsController,
     AdminManagementController,
-    CampaignController
+    CampaignController,
+    WebhookController
   ],
   providers: [
     AuthService, 
@@ -75,7 +87,11 @@ import { Campaign, CampaignSchema } from './models/campaign.schema';
     SiteSettingsService,
     AdminManagementService,
     CampaignService,
-    CampaignSchedulerService
+    CampaignSchedulerService,
+    EmailTrackingService,
+    EmailRetryService,
+    EmailBounceService,
+    SendGridService
   ],
   exports: [AuthService],
 })
@@ -95,5 +111,6 @@ export class AdminModule {
       'admin/admin-management',
       'admin/campaigns'
     );
+    // Note: Webhook routes are excluded from auth middleware as they need to be accessible by SendGrid
   }
 } 

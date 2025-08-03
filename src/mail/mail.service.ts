@@ -606,8 +606,17 @@ export class MailService {
    * @param content - Email content (HTML)
    */
   async sendCampaignEmail(to: string, subject: string, content: string) {
+    console.log(`📧 [MAIL] Attempting to send campaign email to: ${to}`);
+    console.log(`📧 [MAIL] Subject: ${subject}`);
+    console.log(`📧 [MAIL] Content length: ${content.length} characters`);
+
     // Get site settings
     const siteSettings = await this.getSiteSettingsForEmail();
+    console.log(`📧 [MAIL] Site settings:`, {
+      siteName: siteSettings.siteName,
+      businessEmail: siteSettings.businessEmail,
+      siteUrl: siteSettings.siteUrl
+    });
     
     // Create email HTML with campaign content
     const emailHtml = `
@@ -651,11 +660,40 @@ export class MailService {
       subject: subject,
       html: emailHtml
     };
+
+    console.log(`📧 [MAIL] Mail options:`, {
+      from: mailOptions.from,
+      to: mailOptions.to,
+      subject: mailOptions.subject,
+      htmlLength: mailOptions.html.length
+    });
     
     try {
-      return await this.transporter.sendMail(mailOptions);
+      console.log(`📧 [MAIL] Sending email via transporter...`);
+      const result = await this.transporter.sendMail(mailOptions);
+      console.log(`✅ [MAIL] Email sent successfully to ${to}`);
+      console.log(`📧 [MAIL] SMTP response:`, result);
+      
+      // Check if email was actually accepted by recipient server
+      if (result.rejected && result.rejected.length > 0) {
+        console.log(`❌ [MAIL] Email rejected by recipient server:`, result.rejected);
+        const error: any = new Error(`Email rejected by recipient server: ${result.rejected.join(', ')}`);
+        error.code = '550';
+        error.response = 'Email rejected by recipient server';
+        throw error;
+      }
+      
+      return result;
     } catch (error) {
-      console.error(`Failed to send campaign email to ${to}:`, error);
+      console.error(`❌ [MAIL] Failed to send campaign email to ${to}:`, error);
+      console.error(`❌ [MAIL] Error details:`, {
+        message: error.message,
+        code: error.code,
+        response: error.response,
+        command: error.command,
+        responseCode: error.responseCode,
+        stack: error.stack
+      });
       throw error; // Re-throw for campaign service to handle
     }
   }

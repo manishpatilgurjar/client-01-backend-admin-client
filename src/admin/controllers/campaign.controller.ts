@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { CampaignService } from '../services/campaign.service';
 import { CampaignSchedulerService } from '../services/campaign-scheduler.service';
+import { EmailRetryService } from '../services/email-retry.service';
 import { CreateCampaignDto, UpdateCampaignDto, RunCampaignDto } from '../enums/campaign.dto';
 import { AdminSuccessResponse } from '../enums/response';
 import { CampaignStatus } from '../models/campaign.schema';
@@ -21,7 +22,8 @@ import { CampaignStatus } from '../models/campaign.schema';
 export class CampaignController {
   constructor(
     private readonly campaignService: CampaignService,
-    private readonly campaignSchedulerService: CampaignSchedulerService
+    private readonly campaignSchedulerService: CampaignSchedulerService,
+    private readonly emailRetryService: EmailRetryService
   ) {}
 
   /**
@@ -100,6 +102,108 @@ export class CampaignController {
     // TODO: Get user info from JWT token when auth is implemented
     const result = await this.campaignService.runCampaign(id, dto, 'admin', 'admin@example.com');
     return new AdminSuccessResponse(result.message, { campaignId: result.campaignId });
+  }
+
+  /**
+   * GET /admin/campaigns/:id/failed-emails - Get Failed Emails for Campaign
+   */
+  @Get(':id/failed-emails')
+  async getFailedEmails(@Param('id') id: string) {
+    const failedEmails = await this.campaignService.getFailedEmails(id);
+    return new AdminSuccessResponse('Failed emails fetched successfully', failedEmails);
+  }
+
+  /**
+   * POST /admin/campaigns/:id/retry-failed - Retry Failed Emails
+   */
+  @Post(':id/retry-failed')
+  async retryFailedEmails(@Param('id') id: string) {
+    // TODO: Get user info from JWT token when auth is implemented
+    const result = await this.campaignService.retryFailedEmails(id, 'admin', 'admin@example.com');
+    return new AdminSuccessResponse(result.message, { retryCount: result.retryCount });
+  }
+
+  /**
+   * GET /admin/campaigns/:id/detailed-stats - Get Detailed Campaign Statistics
+   */
+  @Get(':id/detailed-stats')
+  async getDetailedCampaignStats(@Param('id') id: string) {
+    const stats = await this.campaignService.getDetailedCampaignStats(id);
+    return new AdminSuccessResponse('Detailed campaign statistics fetched successfully', stats);
+  }
+
+  /**
+   * POST /admin/campaigns/retry/trigger - Manually Trigger Retry Processing
+   */
+  @Post('retry/trigger')
+  async triggerRetryProcessing() {
+    const result = await this.emailRetryService.triggerRetryProcessing();
+    return new AdminSuccessResponse('Retry processing triggered successfully', result);
+  }
+
+  /**
+   * GET /admin/campaigns/retry/stats - Get Retry Statistics
+   */
+  @Get('retry/stats')
+  async getRetryStats() {
+    const stats = await this.emailRetryService.getRetryStats();
+    return new AdminSuccessResponse('Retry statistics fetched successfully', stats);
+  }
+
+  /**
+   * POST /admin/campaigns/test-failure - Test email failure scenario
+   */
+  @Post('test-failure')
+  async testEmailFailure() {
+    console.log(`🧪 [TEST] Testing email failure scenario...`);
+    
+    try {
+      // Try to send to a known invalid email
+      await this.campaignService.testEmailFailure('manish.iwdhyugv@gmail.com', 'Test Subject', 'Test Content');
+      return new AdminSuccessResponse('Test completed - check logs for details');
+    } catch (error) {
+      console.error(`❌ [TEST] Test failed:`, error);
+      return new AdminSuccessResponse('Test completed with expected failure', { error: error.message });
+    }
+  }
+
+  /**
+   * GET /admin/campaigns/email-tracking/debug - Debug email tracking data
+   */
+  @Get('email-tracking/debug')
+  async debugEmailTracking() {
+    const debugData = await this.campaignService.debugEmailTracking();
+    return new AdminSuccessResponse('Email tracking debug data', debugData);
+  }
+
+  /**
+   * POST /admin/campaigns/simulate-bounce - Simulate a bounce for testing
+   */
+  @Post('simulate-bounce')
+  async simulateBounce(@Body() body: {
+    email: string;
+    bounceType: string;
+    reason: string;
+    smtpCode?: string;
+  }) {
+    const result = await this.campaignService.simulateBounce(body);
+    return new AdminSuccessResponse('Bounce simulated successfully', result);
+  }
+
+  /**
+   * POST /admin/campaigns/test-sendgrid - Test SendGrid connection
+   */
+  @Post('test-sendgrid')
+  async testSendGridConnection() {
+    console.log(`🧪 [CAMPAIGN-CONTROLLER] Testing SendGrid connection...`);
+    
+    try {
+      const isConnected = await this.campaignService.testSendGridConnection();
+      return new AdminSuccessResponse('SendGrid connection test completed', { connected: isConnected });
+    } catch (error) {
+      console.error(`❌ [CAMPAIGN-CONTROLLER] SendGrid connection test failed:`, error);
+      return new AdminSuccessResponse('SendGrid connection test failed', { error: error.message });
+    }
   }
 
   /**

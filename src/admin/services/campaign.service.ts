@@ -6,13 +6,21 @@ import { CreateCampaignDto, UpdateCampaignDto, CampaignResponseDto, CampaignStat
 import { MailService } from '../../mail/mail.service';
 import { EnquiryModel } from '../models/enquiry.schema';
 import { ActivityLogService } from './activity-log.service';
+import { EmailTrackingService } from './email-tracking.service';
+import { EmailTrackingDocument } from '../models/email-tracking.schema';
+import { EmailBounceService } from './email-bounce.service';
+import { BounceType } from '../models/email-bounce.schema';
+import { SendGridService } from './sendgrid.service';
 
 @Injectable()
 export class CampaignService {
   constructor(
     @InjectModel(Campaign.name) private campaignModel: Model<CampaignDocument>,
     private readonly mailService: MailService,
-    private readonly activityLogService: ActivityLogService
+    private readonly activityLogService: ActivityLogService,
+    private readonly emailTrackingService: EmailTrackingService,
+    private readonly emailBounceService: EmailBounceService,
+    private readonly sendGridService: SendGridService
   ) {}
 
   /**
@@ -278,6 +286,8 @@ export class CampaignService {
    * Get campaign statistics
    */
   async getCampaignStats(): Promise<CampaignStatsDto> {
+    console.log(`📊 [CAMPAIGN-STATS] Fetching campaign statistics...`);
+
     const [
       totalCampaigns,
       draftCampaigns,
@@ -286,7 +296,8 @@ export class CampaignService {
       completedCampaigns,
       failedCampaigns,
       totalEmailsSent,
-      totalEmailsFailed
+      totalEmailsFailed,
+      emailTrackingStats
     ] = await Promise.all([
       this.campaignModel.countDocuments(),
       this.campaignModel.countDocuments({ status: CampaignStatus.DRAFT }),
@@ -299,7 +310,8 @@ export class CampaignService {
       ]),
       this.campaignModel.aggregate([
         { $group: { _id: null, total: { $sum: '$failedCount' } } }
-      ])
+      ]),
+      this.emailTrackingService.getGlobalStats()
     ]);
 
     const totalSent = totalEmailsSent[0]?.total || 0;
@@ -314,7 +326,25 @@ export class CampaignService {
     const totalOpenedCount = totalOpened[0]?.total || 0;
     const totalClickedCount = totalClicked[0]?.total || 0;
 
-    return {
+    console.log(`📊 [CAMPAIGN-STATS] Campaign counts:`, {
+      totalCampaigns,
+      draftCampaigns,
+      scheduledCampaigns,
+      runningCampaigns,
+      completedCampaigns,
+      failedCampaigns
+    });
+
+    console.log(`📊 [CAMPAIGN-STATS] Email counts from campaigns:`, {
+      totalSent,
+      totalFailed,
+      totalOpenedCount,
+      totalClickedCount
+    });
+
+    console.log(`📊 [CAMPAIGN-STATS] Email tracking stats:`, emailTrackingStats);
+
+    const result = {
       totalCampaigns,
       draftCampaigns,
       scheduledCampaigns,
@@ -324,8 +354,17 @@ export class CampaignService {
       totalEmailsSent: totalSent,
       totalEmailsFailed: totalFailed,
       averageOpenRate: totalSent > 0 ? (totalOpenedCount / totalSent) * 100 : 0,
-      averageClickRate: totalSent > 0 ? (totalClickedCount / totalSent) * 100 : 0
+      averageClickRate: totalSent > 0 ? (totalClickedCount / totalSent) * 100 : 0,
+      // Add email tracking statistics
+      totalEmailsTracked: emailTrackingStats.totalEmails,
+      pendingEmails: emailTrackingStats.pendingEmails,
+      retryingEmails: emailTrackingStats.retryingEmails,
+      permanentlyFailedEmails: emailTrackingStats.permanentlyFailedEmails,
+      emailFailureRate: emailTrackingStats.failureRate
     };
+
+    console.log(`📊 [CAMPAIGN-STATS] Final result:`, result);
+    return result;
   }
 
   /**
@@ -353,12 +392,16 @@ export class CampaignService {
   }
 
   /**
-   * Send campaign emails (background process)
+   * Send campaign emails (background process) with comprehensive tracking
    */
   private async sendCampaignEmails(campaignId: string, recipientEmails: string[]): Promise<void> {
+    console.log(`🚀 [CAMPAIGN] Starting email sending process for campaign ${campaignId}`);
+    console.log(`📧 [CAMPAIGN] Total recipients: ${recipientEmails.length}`);
+    console.log(`📧 [CAMPAIGN] Recipient emails:`, recipientEmails);
+
     const campaign = await this.campaignModel.findById(campaignId);
     if (!campaign) {
-      console.error(`Campaign ${campaignId} not found`);
+      console.error(`❌ [CAMPAIGN] Campaign ${campaignId} not found`);
       return;
     }
 
@@ -369,37 +412,103 @@ export class CampaignService {
     const sentEmails: string[] = [];
     const failedEmails: string[] = [];
 
-    console.log(`Starting campaign ${campaignId} with ${recipientEmails.length} recipients`);
+    console.log(`⚙️ [CAMPAIGN] Settings - Send Interval: ${sendInterval}s, Max Retries: ${maxRetries}`);
+
+    // Create tracking records for all emails
+    console.log(`📝 [CAMPAIGN] Creating tracking records for ${recipientEmails.length} emails...`);
+    const trackingRecords: EmailTrackingDocument[] = await Promise.all(
+      recipientEmails.map(async (email, index) => {
+        console.log(`📝 [CAMPAIGN] Creating tracking record ${index + 1}/${recipientEmails.length} for ${email}`);
+        const record = await this.emailTrackingService.createTrackingRecord({
+          campaignId,
+          recipientEmail: email,
+          subject: campaign.subject,
+          maxRetries,
+          createdBy: campaign.createdBy?.toString(),
+          createdByEmail: campaign.createdByEmail,
+          metadata: {
+            campaignName: campaign.name,
+            sendInterval
+          }
+        });
+        console.log(`✅ [CAMPAIGN] Tracking record created for ${email} with ID: ${(record as any)._id}`);
+        return record;
+      })
+    );
+
+    console.log(`✅ [CAMPAIGN] All tracking records created successfully`);
 
     for (let i = 0; i < recipientEmails.length; i++) {
       const email = recipientEmails[i];
+      const trackingRecord = trackingRecords[i];
       let retryCount = 0;
       let success = false;
 
+      console.log(`\n📧 [CAMPAIGN] Processing email ${i + 1}/${recipientEmails.length}: ${email}`);
+      console.log(`🆔 [CAMPAIGN] Tracking record ID: ${(trackingRecord as any)._id}`);
+
       while (retryCount < maxRetries && !success) {
         try {
-          // Send email using mail service
-          await this.mailService.sendCampaignEmail(email, campaign.subject, campaign.content);
+          console.log(`📤 [CAMPAIGN] Attempting to send email to ${email} (attempt ${retryCount + 1}/${maxRetries})`);
+          
+          // Send email using SendGrid for campaigns
+          const sendGridResult = await this.sendGridService.sendCampaignEmail({
+            to: email,
+            subject: campaign.subject,
+            content: campaign.content,
+            campaignId: campaignId,
+            trackingId: (trackingRecord as any)._id.toString()
+          });
+          
           success = true;
           sentCount++;
           sentEmails.push(email);
-          console.log(`Email sent successfully to ${email}`);
+          
+          console.log(`✅ [CAMPAIGN] Email sent successfully to ${email} via SendGrid`);
+          console.log(`📧 [CAMPAIGN] SendGrid Message ID: ${sendGridResult.messageId}`);
+          
+          // Mark as sent in tracking
+          console.log(`📝 [CAMPAIGN] Marking email as sent in tracking for ${email}`);
+          await this.emailTrackingService.markAsSent((trackingRecord as any)._id.toString());
+          console.log(`✅ [CAMPAIGN] Email marked as sent in tracking for ${email}`);
+          
         } catch (error) {
           retryCount++;
-          console.error(`Failed to send email to ${email} (attempt ${retryCount}):`, error);
+          console.error(`❌ [CAMPAIGN] Failed to send email to ${email} (attempt ${retryCount}/${maxRetries}):`, error);
+          console.error(`❌ [CAMPAIGN] Error details:`, {
+            message: error.message,
+            code: error.code,
+            response: error.response,
+            stack: error.stack
+          });
           
           if (retryCount >= maxRetries) {
             failedCount++;
             failedEmails.push(email);
-            console.error(`Email failed permanently for ${email}`);
+            
+            console.log(`💀 [CAMPAIGN] Max retries reached for ${email}, marking as permanently failed`);
+            
+            // Mark as permanently failed in tracking
+            await this.emailTrackingService.markAsPermanentlyFailed((trackingRecord as any)._id.toString(), error);
+            console.log(`✅ [CAMPAIGN] Email marked as permanently failed in tracking for ${email}`);
+            
           } else {
+            console.log(`🔄 [CAMPAIGN] Scheduling retry for ${email} in 5 minutes`);
+            
+            // Mark as failed and schedule retry
+            await this.emailTrackingService.markAsFailed((trackingRecord as any)._id.toString(), error);
+            await this.emailTrackingService.scheduleRetry((trackingRecord as any)._id.toString(), 5); // 5 minutes delay
+            console.log(`✅ [CAMPAIGN] Retry scheduled for ${email}`);
+            
             // Wait before retry
+            console.log(`⏳ [CAMPAIGN] Waiting 1 second before next attempt...`);
             await new Promise(resolve => setTimeout(resolve, 1000));
           }
         }
       }
 
       // Update campaign progress
+      console.log(`📊 [CAMPAIGN] Updating campaign progress - Sent: ${sentCount}, Failed: ${failedCount}`);
       await this.campaignModel.findByIdAndUpdate(campaignId, {
         sentCount,
         failedCount,
@@ -409,17 +518,239 @@ export class CampaignService {
 
       // Wait before sending next email (rate limiting)
       if (i < recipientEmails.length - 1) {
+        console.log(`⏳ [CAMPAIGN] Rate limiting: waiting ${sendInterval} seconds before next email...`);
         await new Promise(resolve => setTimeout(resolve, sendInterval * 1000));
       }
     }
 
     // Mark campaign as completed
+    console.log(`🏁 [CAMPAIGN] Marking campaign ${campaignId} as completed`);
     await this.campaignModel.findByIdAndUpdate(campaignId, {
       status: CampaignStatus.COMPLETED,
       completedAt: new Date()
     });
 
-    console.log(`Campaign ${campaignId} completed. Sent: ${sentCount}, Failed: ${failedCount}`);
+    console.log(`🎉 [CAMPAIGN] Campaign ${campaignId} completed. Final stats - Sent: ${sentCount}, Failed: ${failedCount}`);
+    console.log(`📧 [CAMPAIGN] Sent emails:`, sentEmails);
+    console.log(`❌ [CAMPAIGN] Failed emails:`, failedEmails);
+  }
+
+  /**
+   * Get failed emails for a campaign
+   */
+  async getFailedEmails(campaignId: string): Promise<any[]> {
+    const failedEmails = await this.emailTrackingService.getFailedEmails(campaignId);
+    return failedEmails.map(email => ({
+      _id: (email as any)._id.toString(),
+      recipientEmail: email.recipientEmail,
+      subject: email.subject,
+      status: email.status,
+      failureReason: email.failureReason,
+      errorMessage: email.errorMessage,
+      retryCount: email.retryCount,
+      failedAt: email.failedAt,
+      smtpResponse: email.smtpResponse
+    }));
+  }
+
+  /**
+   * Retry failed emails for a campaign
+   */
+  async retryFailedEmails(campaignId: string, userId: string, userEmail: string): Promise<{ message: string; retryCount: number }> {
+    const failedEmails = await this.emailTrackingService.getFailedEmails(campaignId);
+    
+    if (failedEmails.length === 0) {
+      throw new BadRequestException('No failed emails found for this campaign');
+    }
+
+    let retryCount = 0;
+    for (const emailTracking of failedEmails) {
+      try {
+        // Reset the tracking record for retry
+        await this.emailTrackingService.scheduleRetry((emailTracking as any)._id.toString(), 1); // 1 minute delay
+        retryCount++;
+      } catch (error) {
+        console.error(`Failed to schedule retry for ${emailTracking.recipientEmail}:`, error);
+      }
+    }
+
+    // Log activity
+    await this.activityLogService.logActivity({
+      action: 'Campaign Retry Failed Emails',
+      entity: 'Campaign',
+      entityId: campaignId,
+      entityName: `Retry ${retryCount} failed emails`,
+      userId: userId,
+      userEmail: userEmail,
+      type: 'update'
+    });
+
+    return { 
+      message: `Scheduled ${retryCount} failed emails for retry`,
+      retryCount 
+    };
+  }
+
+  /**
+   * Get detailed campaign statistics with email tracking
+   */
+  async getDetailedCampaignStats(campaignId: string): Promise<any> {
+    const campaign = await this.campaignModel.findById(campaignId);
+    if (!campaign) {
+      throw new NotFoundException('Campaign not found');
+    }
+
+    const emailStats = await this.emailTrackingService.getCampaignStats(campaignId);
+    
+    return {
+      campaign: this.mapToResponseDto(campaign),
+      emailStats,
+      failureRate: emailStats.total > 0 ? ((emailStats.failed + emailStats.permanentlyFailed) / emailStats.total) * 100 : 0
+    };
+  }
+
+  /**
+   * Test email failure scenario
+   */
+  async testEmailFailure(email: string, subject: string, content: string): Promise<void> {
+    console.log(`🧪 [TEST] Testing email failure for: ${email}`);
+    
+    let trackingRecord: any;
+    
+    try {
+      // Create a tracking record
+      trackingRecord = await this.emailTrackingService.createTrackingRecord({
+        campaignId: '000000000000000000000000', // Dummy campaign ID
+        recipientEmail: email,
+        subject: subject,
+        maxRetries: 3,
+        createdBy: 'test',
+        createdByEmail: 'test@test.com',
+        metadata: {
+          campaignName: 'Test Campaign',
+          isTest: true
+        }
+      });
+
+      console.log(`🧪 [TEST] Tracking record created: ${trackingRecord._id}`);
+
+      // Try to send the email
+      await this.mailService.sendCampaignEmail(email, subject, content);
+      
+      console.log(`🧪 [TEST] Email sent successfully (unexpected)`);
+      await this.emailTrackingService.markAsSent(trackingRecord._id.toString());
+      
+    } catch (error) {
+      console.log(`🧪 [TEST] Email failed as expected:`, error);
+      if (trackingRecord) {
+        await this.emailTrackingService.markAsFailed(trackingRecord._id.toString(), error);
+      }
+      throw error; // Re-throw to show the failure
+    }
+  }
+
+  /**
+   * Debug email tracking data
+   */
+  async debugEmailTracking(): Promise<any> {
+    console.log(`🔍 [DEBUG] Fetching email tracking debug data...`);
+    
+    // Get all email tracking records
+    const allRecords = await this.emailTrackingService.getAllTrackingRecords();
+    
+    // Get statistics
+    const stats = await this.emailTrackingService.getGlobalStats();
+    
+    // Get failed emails
+    const failedEmails = await this.emailTrackingService.getAllFailedEmails();
+    
+    return {
+      totalRecords: allRecords.length,
+      statistics: stats,
+      allRecords: allRecords.map(record => ({
+        id: (record as any)._id,
+        email: record.recipientEmail,
+        status: record.status,
+        failureReason: record.failureReason,
+        errorMessage: record.errorMessage,
+        retryCount: record.retryCount,
+        createdAt: (record as any).createdAt,
+        sentAt: record.sentAt,
+        failedAt: record.failedAt
+      })),
+      failedEmails: failedEmails.map(record => ({
+        id: record._id,
+        email: record.recipientEmail,
+        status: record.status,
+        failureReason: record.failureReason,
+        errorMessage: record.errorMessage,
+        retryCount: record.retryCount,
+        failedAt: record.failedAt
+      }))
+    };
+  }
+
+  /**
+   * Simulate a bounce for testing
+   */
+  async simulateBounce(bounceData: {
+    email: string;
+    bounceType: string;
+    reason: string;
+    smtpCode?: string;
+  }): Promise<any> {
+    console.log(`🧪 [BOUNCE] Simulating bounce for: ${bounceData.email}`);
+    
+    // Map string bounce type to enum
+    let bounceType: BounceType;
+    switch (bounceData.bounceType.toLowerCase()) {
+      case 'hard_bounce':
+        bounceType = BounceType.HARD_BOUNCE;
+        break;
+      case 'soft_bounce':
+        bounceType = BounceType.SOFT_BOUNCE;
+        break;
+      case 'blocked':
+        bounceType = BounceType.BLOCKED;
+        break;
+      case 'spam':
+        bounceType = BounceType.SPAM;
+        break;
+      case 'unsubscribed':
+        bounceType = BounceType.UNSUBSCRIBED;
+        break;
+      case 'invalid_email':
+        bounceType = BounceType.INVALID_EMAIL;
+        break;
+      default:
+        bounceType = BounceType.HARD_BOUNCE;
+    }
+
+    // Process the bounce
+    await this.emailBounceService.processBounce({
+      recipientEmail: bounceData.email,
+      bounceType: bounceType,
+      reason: bounceData.reason,
+      smtpCode: bounceData.smtpCode,
+      smtpMessage: bounceData.reason
+    });
+
+    // Get updated tracking data
+    const trackingRecord = await this.emailTrackingService.findByEmail(bounceData.email);
+    const bounceStats = await this.emailBounceService.getBounceStats();
+
+    return {
+      message: `Bounce simulated for ${bounceData.email}`,
+      bounceType: bounceType,
+      trackingRecord: trackingRecord ? {
+        id: (trackingRecord as any)._id,
+        email: trackingRecord.recipientEmail,
+        status: trackingRecord.status,
+        failureReason: trackingRecord.failureReason,
+        errorMessage: trackingRecord.errorMessage
+      } : null,
+      bounceStats
+    };
   }
 
   /**
@@ -453,5 +784,21 @@ export class CampaignService {
       createdAt: campaignDoc.createdAt,
       updatedAt: campaignDoc.updatedAt
     };
+  }
+
+  /**
+   * Test SendGrid connection
+   */
+  async testSendGridConnection(): Promise<boolean> {
+    console.log(`🧪 [CAMPAIGN] Testing SendGrid connection...`);
+    
+    try {
+      const isConnected = await this.sendGridService.testConnection();
+      console.log(`✅ [CAMPAIGN] SendGrid connection test result: ${isConnected}`);
+      return isConnected;
+    } catch (error) {
+      console.error(`❌ [CAMPAIGN] SendGrid connection test failed:`, error);
+      return false;
+    }
   }
 } 

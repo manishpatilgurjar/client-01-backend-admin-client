@@ -139,6 +139,12 @@ export class CampaignStatsDto {
   totalEmailsFailed: number;
   averageOpenRate: number;
   averageClickRate: number;
+  // Email tracking statistics
+  totalEmailsTracked: number;
+  pendingEmails: number;
+  retryingEmails: number;
+  permanentlyFailedEmails: number;
+  emailFailureRate: number;
 }
 
 export class RunCampaignDto {
