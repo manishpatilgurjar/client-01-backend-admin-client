@@ -7,7 +7,6 @@ export class SendGridService {
 
   constructor() {
     // Initialize SendGrid service - API key will be set when needed
-    this.logger.log('SendGrid service initialized');
   }
 
   /**
@@ -16,13 +15,10 @@ export class SendGridService {
   private initializeSendGrid(): void {
     const apiKey = process.env.SENDGRID_API_KEY;
     if (!apiKey) {
-      this.logger.warn('SENDGRID_API_KEY not found in environment variables. SendGrid features will be disabled.');
-      this.logger.warn('To enable SendGrid, add SENDGRID_API_KEY to your environment variables.');
       return;
     }
     
     sgMail.setApiKey(apiKey);
-    this.logger.log('SendGrid API key set successfully');
   }
 
   /**
@@ -44,10 +40,6 @@ export class SendGridService {
     fromEmail?: string;
     fromName?: string;
   }): Promise<any> {
-    console.log(`📧 [SENDGRID] Sending campaign email to: ${data.to}`);
-    console.log(`📧 [SENDGRID] Campaign ID: ${data.campaignId}`);
-    console.log(`📧 [SENDGRID] Tracking ID: ${data.trackingId}`);
-
     // Initialize SendGrid if not already done
     this.initializeSendGrid();
 
@@ -62,11 +54,6 @@ export class SendGridService {
     if (!fromEmail) {
       throw new Error('SENDGRID_FROM_EMAIL or GMAIL_USER environment variable is required');
     }
-
-    console.log(`📧 [SENDGRID] From Email: ${fromEmail}`);
-    console.log(`📧 [SENDGRID] From Name: ${fromName}`);
-    console.log(`📧 [SENDGRID] To Email: ${data.to}`);
-    console.log(`📧 [SENDGRID] Subject: ${data.subject}`);
 
     // Create email HTML with tracking
     const emailHtml = this.createEmailHtml(data.content, data.trackingId);
@@ -107,15 +94,7 @@ export class SendGridService {
     };
 
     try {
-      console.log(`📧 [SENDGRID] Sending email via SendGrid...`);
       const response = await sgMail.send(msg);
-      
-      console.log(`✅ [SENDGRID] Email sent successfully to ${data.to}`);
-      console.log(`📧 [SENDGRID] SendGrid response:`, {
-        statusCode: response[0].statusCode,
-        headers: response[0].headers,
-        messageId: response[0].headers['x-message-id']
-      });
 
       return {
         success: true,
@@ -126,14 +105,6 @@ export class SendGridService {
       };
 
     } catch (error) {
-      console.error(`❌ [SENDGRID] Failed to send email to ${data.to}:`, error);
-      console.error(`❌ [SENDGRID] Error details:`, {
-        message: error.message,
-        code: error.code,
-        response: error.response?.body,
-        statusCode: error.code
-      });
-
       // Create error object for tracking
       const trackingError: any = new Error(`SendGrid error: ${error.message}`);
       trackingError.code = error.code || '500';
@@ -234,7 +205,6 @@ export class SendGridService {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       return emailRegex.test(email);
     } catch (error) {
-      console.error(`❌ [SENDGRID] Email verification failed for ${email}:`, error);
       return false;
     }
   }
@@ -252,7 +222,6 @@ export class SendGridService {
         message: 'Statistics available via SendGrid dashboard'
       };
     } catch (error) {
-      console.error(`❌ [SENDGRID] Failed to get account stats:`, error);
       return {
         provider: 'SendGrid',
         status: 'error',
@@ -271,13 +240,11 @@ export class SendGridService {
 
       // Check if SendGrid is configured
       if (!this.isSendGridConfigured()) {
-        this.logger.error('SendGrid is not configured');
         return false;
       }
 
       const fromEmail = process.env.SENDGRID_FROM_EMAIL || process.env.GMAIL_USER;
       if (!fromEmail) {
-        this.logger.error('No from email configured for SendGrid test');
         return false;
       }
 
@@ -291,10 +258,8 @@ export class SendGridService {
       };
 
       await sgMail.send(testMsg);
-      this.logger.log('SendGrid connection test successful');
       return true;
     } catch (error) {
-      this.logger.error('SendGrid connection test failed:', error);
       return false;
     }
   }

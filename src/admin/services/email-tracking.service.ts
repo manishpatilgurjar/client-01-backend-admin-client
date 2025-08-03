@@ -21,11 +21,6 @@ export class EmailTrackingService {
     createdByEmail?: string;
     metadata?: any;
   }): Promise<EmailTrackingDocument> {
-    console.log(`📝 [EMAIL-TRACKING] Creating tracking record for ${data.recipientEmail}`);
-    console.log(`📝 [EMAIL-TRACKING] Campaign ID: ${data.campaignId}`);
-    console.log(`📝 [EMAIL-TRACKING] Subject: ${data.subject}`);
-    console.log(`📝 [EMAIL-TRACKING] Max Retries: ${data.maxRetries || 3}`);
-
     const trackingRecord = new this.emailTrackingModel({
       campaignId: new Types.ObjectId(data.campaignId),
       recipientEmail: data.recipientEmail,
@@ -38,10 +33,6 @@ export class EmailTrackingService {
     });
 
     const savedRecord = await trackingRecord.save();
-    console.log(`✅ [EMAIL-TRACKING] Tracking record created successfully for ${data.recipientEmail}`);
-    console.log(`🆔 [EMAIL-TRACKING] Record ID: ${savedRecord._id}`);
-    console.log(`📊 [EMAIL-TRACKING] Status: ${savedRecord.status}`);
-
     return savedRecord;
   }
 
@@ -49,9 +40,7 @@ export class EmailTrackingService {
    * Mark email as sent successfully
    */
   async markAsSent(trackingId: string): Promise<void> {
-    console.log(`✅ [EMAIL-TRACKING] Marking email as sent - Tracking ID: ${trackingId}`);
-    
-    const result = await this.emailTrackingModel.findByIdAndUpdate(trackingId, {
+    await this.emailTrackingModel.findByIdAndUpdate(trackingId, {
       status: EmailStatus.SENT,
       sentAt: new Date(),
       $unset: { 
@@ -62,111 +51,59 @@ export class EmailTrackingService {
         smtpResponse: 1
       }
     });
-
-    if (result) {
-      console.log(`✅ [EMAIL-TRACKING] Email marked as sent successfully - Tracking ID: ${trackingId}`);
-      console.log(`📧 [EMAIL-TRACKING] Recipient: ${result.recipientEmail}`);
-    } else {
-      console.error(`❌ [EMAIL-TRACKING] Failed to mark email as sent - Tracking ID not found: ${trackingId}`);
-    }
   }
 
   /**
    * Mark email as failed with error details
    */
   async markAsFailed(trackingId: string, error: any): Promise<void> {
-    console.log(`❌ [EMAIL-TRACKING] Marking email as failed - Tracking ID: ${trackingId}`);
-    console.log(`❌ [EMAIL-TRACKING] Error object:`, error);
-    
     const failureReason = this.categorizeFailure(error);
     const errorMessage = this.extractErrorMessage(error);
     const smtpResponse = this.extractSmtpResponse(error);
 
-    console.log(`🔍 [EMAIL-TRACKING] Categorized failure reason: ${failureReason}`);
-    console.log(`🔍 [EMAIL-TRACKING] Error message: ${errorMessage}`);
-    console.log(`🔍 [EMAIL-TRACKING] SMTP response:`, smtpResponse);
-
-    const result = await this.emailTrackingModel.findByIdAndUpdate(trackingId, {
+    await this.emailTrackingModel.findByIdAndUpdate(trackingId, {
       status: EmailStatus.FAILED,
       failureReason,
       errorMessage,
       failedAt: new Date(),
       smtpResponse
     });
-
-    if (result) {
-      console.log(`✅ [EMAIL-TRACKING] Email marked as failed successfully - Tracking ID: ${trackingId}`);
-      console.log(`📧 [EMAIL-TRACKING] Recipient: ${result.recipientEmail}`);
-      console.log(`📊 [EMAIL-TRACKING] Status: ${EmailStatus.FAILED}`);
-    } else {
-      console.error(`❌ [EMAIL-TRACKING] Failed to mark email as failed - Tracking ID not found: ${trackingId}`);
-    }
   }
 
   /**
    * Mark email as permanently failed (max retries exceeded)
    */
   async markAsPermanentlyFailed(trackingId: string, error: any): Promise<void> {
-    console.log(`💀 [EMAIL-TRACKING] Marking email as permanently failed - Tracking ID: ${trackingId}`);
-    console.log(`💀 [EMAIL-TRACKING] Error object:`, error);
-    
     const failureReason = this.categorizeFailure(error);
     const errorMessage = this.extractErrorMessage(error);
     const smtpResponse = this.extractSmtpResponse(error);
 
-    console.log(`🔍 [EMAIL-TRACKING] Categorized failure reason: ${failureReason}`);
-    console.log(`🔍 [EMAIL-TRACKING] Error message: ${errorMessage}`);
-    console.log(`🔍 [EMAIL-TRACKING] SMTP response:`, smtpResponse);
-
-    const result = await this.emailTrackingModel.findByIdAndUpdate(trackingId, {
+    await this.emailTrackingModel.findByIdAndUpdate(trackingId, {
       status: EmailStatus.PERMANENTLY_FAILED,
       failureReason,
       errorMessage,
       failedAt: new Date(),
       smtpResponse
     });
-
-    if (result) {
-      console.log(`✅ [EMAIL-TRACKING] Email marked as permanently failed successfully - Tracking ID: ${trackingId}`);
-      console.log(`📧 [EMAIL-TRACKING] Recipient: ${result.recipientEmail}`);
-      console.log(`📊 [EMAIL-TRACKING] Status: ${EmailStatus.PERMANENTLY_FAILED}`);
-    } else {
-      console.error(`❌ [EMAIL-TRACKING] Failed to mark email as permanently failed - Tracking ID not found: ${trackingId}`);
-    }
   }
 
   /**
    * Increment retry count and schedule next retry
    */
   async scheduleRetry(trackingId: string, retryDelayMinutes: number = 5): Promise<void> {
-    console.log(`🔄 [EMAIL-TRACKING] Scheduling retry - Tracking ID: ${trackingId}, Delay: ${retryDelayMinutes} minutes`);
-    
     const tracking = await this.emailTrackingModel.findById(trackingId);
     if (!tracking) {
-      console.error(`❌ [EMAIL-TRACKING] Tracking record not found for retry scheduling - ID: ${trackingId}`);
       return;
     }
 
     const nextRetryAt = new Date();
     nextRetryAt.setMinutes(nextRetryAt.getMinutes() + retryDelayMinutes);
 
-    console.log(`📧 [EMAIL-TRACKING] Current retry count: ${tracking.retryCount}`);
-    console.log(`📧 [EMAIL-TRACKING] Next retry scheduled for: ${nextRetryAt.toISOString()}`);
-
-    const result = await this.emailTrackingModel.findByIdAndUpdate(trackingId, {
+    await this.emailTrackingModel.findByIdAndUpdate(trackingId, {
       status: EmailStatus.RETRYING,
       retryCount: tracking.retryCount + 1,
       nextRetryAt
     });
-
-    if (result) {
-      console.log(`✅ [EMAIL-TRACKING] Retry scheduled successfully - Tracking ID: ${trackingId}`);
-      console.log(`📧 [EMAIL-TRACKING] Recipient: ${result.recipientEmail}`);
-      console.log(`📊 [EMAIL-TRACKING] New retry count: ${tracking.retryCount + 1}`);
-      console.log(`📊 [EMAIL-TRACKING] Status: ${EmailStatus.RETRYING}`);
-    } else {
-      console.error(`❌ [EMAIL-TRACKING] Failed to schedule retry - Tracking ID: ${trackingId}`);
-    }
   }
 
   /**
@@ -255,8 +192,6 @@ export class EmailTrackingService {
     permanentlyFailedEmails: number;
     failureRate: number;
   }> {
-    console.log(`📊 [EMAIL-TRACKING] Fetching global email statistics...`);
-
     const stats = await this.emailTrackingModel.aggregate([
       {
         $group: {
@@ -265,8 +200,6 @@ export class EmailTrackingService {
         }
       }
     ]);
-
-    console.log(`📊 [EMAIL-TRACKING] Raw aggregation results:`, stats);
 
     const result = {
       totalEmails: 0,
@@ -279,7 +212,6 @@ export class EmailTrackingService {
     };
 
     stats.forEach(stat => {
-      console.log(`📊 [EMAIL-TRACKING] Processing status: ${stat._id} with count: ${stat.count}`);
       result.totalEmails += stat.count;
       switch (stat._id) {
         case EmailStatus.SENT:
@@ -304,7 +236,6 @@ export class EmailTrackingService {
       result.failureRate = ((result.failedEmails + result.permanentlyFailedEmails) / result.totalEmails) * 100;
     }
 
-    console.log(`📊 [EMAIL-TRACKING] Calculated global stats:`, result);
     return result;
   }
 

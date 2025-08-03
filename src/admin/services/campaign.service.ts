@@ -790,14 +790,10 @@ export class CampaignService {
    * Test SendGrid connection
    */
   async testSendGridConnection(): Promise<boolean> {
-    console.log(`🧪 [CAMPAIGN] Testing SendGrid connection...`);
-    
     try {
       const isConnected = await this.sendGridService.testConnection();
-      console.log(`✅ [CAMPAIGN] SendGrid connection test result: ${isConnected}`);
       return isConnected;
     } catch (error) {
-      console.error(`❌ [CAMPAIGN] SendGrid connection test failed:`, error);
       return false;
     }
   }

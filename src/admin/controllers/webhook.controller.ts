@@ -16,13 +16,15 @@ export class WebhookController {
    */
   @Post('sendgrid')
   async handleSendGridWebhook(@Body() events: any[], @Res() res: Response) {
-    console.log(`📧 [WEBHOOK] Received ${events.length} SendGrid events`);
+    console.log(`🔥 [WEBHOOK] WEBHOOK RECEIVED! Events count: ${events.length}`);
+    console.log(`🔥 [WEBHOOK] Events data:`, JSON.stringify(events, null, 2));
     
     try {
       for (const event of events) {
         await this.processSendGridEvent(event);
       }
       
+      console.log(`✅ [WEBHOOK] All events processed successfully`);
       res.status(HttpStatus.OK).json({ message: 'Events processed successfully' });
     } catch (error) {
       console.error(`❌ [WEBHOOK] Error processing SendGrid events:`, error);
@@ -34,12 +36,7 @@ export class WebhookController {
    * Process individual SendGrid event
    */
   private async processSendGridEvent(event: any): Promise<void> {
-    console.log(`📧 [WEBHOOK] Processing event:`, {
-      event: event.event,
-      email: event.email,
-      timestamp: event.timestamp,
-      sg_message_id: event.sg_message_id
-    });
+    console.log(`🔥 [WEBHOOK] Processing event type: ${event.event} for email: ${event.email}`);
 
     // Try to get tracking ID from multiple sources
     let trackingId = event.custom_args?.trackingId;
@@ -53,18 +50,18 @@ export class WebhookController {
 
     // If still not found, try to find by email
     if (!trackingId) {
-      console.log(`🔍 [WEBHOOK] No tracking ID found in event, searching by email: ${event.email}`);
+      console.log(`🔍 [WEBHOOK] No tracking ID found, searching by email: ${event.email}`);
       try {
         const trackingRecord = await this.emailTrackingService.findByEmail(event.email);
         if (trackingRecord) {
           trackingId = (trackingRecord as any)._id.toString();
-          console.log(`✅ [WEBHOOK] Found tracking record by email: ${trackingId}`);
+          console.log(`✅ [WEBHOOK] Found tracking record: ${trackingId}`);
         } else {
-          console.log(`⚠️ [WEBHOOK] No tracking record found for email: ${event.email}`);
+          console.log(`⚠️ [WEBHOOK] No tracking record found for: ${event.email}`);
           return;
         }
       } catch (error) {
-        console.error(`❌ [WEBHOOK] Error finding tracking record by email:`, error);
+        console.error(`❌ [WEBHOOK] Error finding tracking record:`, error);
         return;
       }
     }
@@ -99,7 +96,7 @@ export class WebhookController {
         break;
       
       default:
-        console.log(`📧 [WEBHOOK] Unhandled event type: ${event.event}`);
+        console.log(`🔥 [WEBHOOK] Unhandled event type: ${event.event}`);
         break;
     }
   }
@@ -108,11 +105,10 @@ export class WebhookController {
    * Handle delivered event
    */
   private async handleDeliveredEvent(trackingId: string, event: any): Promise<void> {
-    console.log(`✅ [WEBHOOK] Email delivered: ${event.email}`);
+    console.log(`🔥 [WEBHOOK] DELIVERED: ${event.email}`);
     
     try {
       await this.emailTrackingService.markAsSent(trackingId);
-      console.log(`✅ [WEBHOOK] Tracking record updated for delivered email`);
     } catch (error) {
       console.error(`❌ [WEBHOOK] Failed to update tracking for delivered email:`, error);
     }
@@ -122,7 +118,7 @@ export class WebhookController {
    * Handle bounce event
    */
   private async handleBounceEvent(trackingId: string, event: any): Promise<void> {
-    console.log(`❌ [WEBHOOK] Email bounced: ${event.email}`);
+    console.log(`🔥 [WEBHOOK] BOUNCED: ${event.email}`);
     
     try {
       const bounceType = this.determineBounceType(event);
@@ -135,8 +131,6 @@ export class WebhookController {
         smtpMessage: event.reason,
         originalMessageId: event.sg_message_id
       });
-      
-      console.log(`✅ [WEBHOOK] Bounce processed for: ${event.email}`);
     } catch (error) {
       console.error(`❌ [WEBHOOK] Failed to process bounce:`, error);
     }
@@ -146,7 +140,7 @@ export class WebhookController {
    * Handle open event
    */
   private async handleOpenEvent(trackingId: string, event: any): Promise<void> {
-    console.log(`👁️ [WEBHOOK] Email opened: ${event.email}`);
+    console.log(`🔥 [WEBHOOK] OPENED: ${event.email}`);
     
     try {
       // Update tracking record with open information
@@ -155,8 +149,6 @@ export class WebhookController {
         userAgent: event.useragent,
         ip: event.ip
       });
-      
-      console.log(`✅ [WEBHOOK] Open tracked for: ${event.email}`);
     } catch (error) {
       console.error(`❌ [WEBHOOK] Failed to track open:`, error);
     }
@@ -166,7 +158,7 @@ export class WebhookController {
    * Handle click event
    */
   private async handleClickEvent(trackingId: string, event: any): Promise<void> {
-    console.log(`🖱️ [WEBHOOK] Email clicked: ${event.email}`);
+    console.log(`🔥 [WEBHOOK] CLICKED: ${event.email}`);
     
     try {
       // Update tracking record with click information
@@ -176,8 +168,6 @@ export class WebhookController {
         userAgent: event.useragent,
         ip: event.ip
       });
-      
-      console.log(`✅ [WEBHOOK] Click tracked for: ${event.email}`);
     } catch (error) {
       console.error(`❌ [WEBHOOK] Failed to track click:`, error);
     }
@@ -187,7 +177,7 @@ export class WebhookController {
    * Handle unsubscribe event
    */
   private async handleUnsubscribeEvent(trackingId: string, event: any): Promise<void> {
-    console.log(`📧 [WEBHOOK] User unsubscribed: ${event.email}`);
+    console.log(`🔥 [WEBHOOK] UNSUBSCRIBED: ${event.email}`);
     
     try {
       await this.emailBounceService.processBounce({
@@ -196,8 +186,6 @@ export class WebhookController {
         reason: 'User unsubscribed from emails',
         originalMessageId: event.sg_message_id
       });
-      
-      console.log(`✅ [WEBHOOK] Unsubscribe processed for: ${event.email}`);
     } catch (error) {
       console.error(`❌ [WEBHOOK] Failed to process unsubscribe:`, error);
     }
@@ -207,7 +195,7 @@ export class WebhookController {
    * Handle spam report event
    */
   private async handleSpamReportEvent(trackingId: string, event: any): Promise<void> {
-    console.log(`🚫 [WEBHOOK] Email marked as spam: ${event.email}`);
+    console.log(`🔥 [WEBHOOK] SPAM REPORT: ${event.email}`);
     
     try {
       await this.emailBounceService.processBounce({
@@ -216,8 +204,6 @@ export class WebhookController {
         reason: 'Email marked as spam',
         originalMessageId: event.sg_message_id
       });
-      
-      console.log(`✅ [WEBHOOK] Spam report processed for: ${event.email}`);
     } catch (error) {
       console.error(`❌ [WEBHOOK] Failed to process spam report:`, error);
     }
@@ -227,7 +213,7 @@ export class WebhookController {
    * Handle dropped event
    */
   private async handleDroppedEvent(trackingId: string, event: any): Promise<void> {
-    console.log(`💀 [WEBHOOK] Email dropped: ${event.email}`);
+    console.log(`🔥 [WEBHOOK] DROPPED: ${event.email}`);
     
     try {
       await this.emailBounceService.processBounce({
@@ -236,8 +222,6 @@ export class WebhookController {
         reason: event.reason || 'Email dropped by SendGrid',
         originalMessageId: event.sg_message_id
       });
-      
-      console.log(`✅ [WEBHOOK] Drop processed for: ${event.email}`);
     } catch (error) {
       console.error(`❌ [WEBHOOK] Failed to process drop:`, error);
     }
@@ -270,7 +254,7 @@ export class WebhookController {
    */
   @Get('tracking/pixel/:trackingId')
   async trackingPixel(@Param('trackingId') trackingId: string, @Res() res: Response) {
-    console.log(`📧 [TRACKING] Tracking pixel accessed for: ${trackingId}`);
+    console.log(`🔥 [WEBHOOK] TRACKING PIXEL: ${trackingId}`);
     
     try {
       // Mark email as opened
@@ -279,10 +263,8 @@ export class WebhookController {
         userAgent: 'Tracking Pixel',
         ip: 'Unknown'
       });
-      
-      console.log(`✅ [TRACKING] Email marked as opened via pixel: ${trackingId}`);
     } catch (error) {
-      console.error(`❌ [TRACKING] Failed to track pixel open:`, error);
+      console.error(`❌ [WEBHOOK] Failed to track pixel open:`, error);
     }
     
     // Return a 1x1 transparent GIF
