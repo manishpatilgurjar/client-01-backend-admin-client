@@ -63,6 +63,11 @@ export class SendGridService {
       throw new Error('SENDGRID_FROM_EMAIL or GMAIL_USER environment variable is required');
     }
 
+    console.log(`📧 [SENDGRID] From Email: ${fromEmail}`);
+    console.log(`📧 [SENDGRID] From Name: ${fromName}`);
+    console.log(`📧 [SENDGRID] To Email: ${data.to}`);
+    console.log(`📧 [SENDGRID] Subject: ${data.subject}`);
+
     // Create email HTML with tracking
     const emailHtml = this.createEmailHtml(data.content, data.trackingId);
 
@@ -93,6 +98,11 @@ export class SendGridService {
         campaignId: data.campaignId,
         trackingId: data.trackingId,
         emailType: 'campaign'
+      },
+      // Add tracking ID to message headers for webhook events
+      headers: {
+        'X-Tracking-ID': data.trackingId,
+        'X-Campaign-ID': data.campaignId
       }
     };
 

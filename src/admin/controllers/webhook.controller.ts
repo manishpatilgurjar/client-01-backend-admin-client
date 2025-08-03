@@ -41,12 +41,32 @@ export class WebhookController {
       sg_message_id: event.sg_message_id
     });
 
-    const trackingId = event.custom_args?.trackingId;
-    const campaignId = event.custom_args?.campaignId;
+    // Try to get tracking ID from multiple sources
+    let trackingId = event.custom_args?.trackingId;
+    let campaignId = event.custom_args?.campaignId;
 
+    // If not in custom_args, try headers
+    if (!trackingId && event.headers) {
+      trackingId = event.headers['X-Tracking-ID'] || event.headers['x-tracking-id'];
+      campaignId = event.headers['X-Campaign-ID'] || event.headers['x-campaign-id'];
+    }
+
+    // If still not found, try to find by email
     if (!trackingId) {
-      console.log(`⚠️ [WEBHOOK] No tracking ID found in event`);
-      return;
+      console.log(`🔍 [WEBHOOK] No tracking ID found in event, searching by email: ${event.email}`);
+      try {
+        const trackingRecord = await this.emailTrackingService.findByEmail(event.email);
+        if (trackingRecord) {
+          trackingId = (trackingRecord as any)._id.toString();
+          console.log(`✅ [WEBHOOK] Found tracking record by email: ${trackingId}`);
+        } else {
+          console.log(`⚠️ [WEBHOOK] No tracking record found for email: ${event.email}`);
+          return;
+        }
+      } catch (error) {
+        console.error(`❌ [WEBHOOK] Error finding tracking record by email:`, error);
+        return;
+      }
     }
 
     switch (event.event) {
