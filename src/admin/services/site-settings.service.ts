@@ -137,7 +137,16 @@ export class SiteSettingsService {
     if (dto.adminEmail !== undefined) settings.adminEmail = dto.adminEmail;
     if (dto.timezone !== undefined) settings.timezone = dto.timezone;
     if (dto.contactNumber !== undefined) settings.contactNumber = dto.contactNumber;
-    if (dto.businessAddress !== undefined) settings.businessAddress = dto.businessAddress;
+    if (dto.businessAddress !== undefined) {
+      settings.businessAddress = {
+        line1: dto.businessAddress.line1 || '',
+        line2: dto.businessAddress.line2 || '',
+        city: dto.businessAddress.city || '',
+        state: dto.businessAddress.state || '',
+        country: dto.businessAddress.country || '',
+        pinCode: dto.businessAddress.pinCode || ''
+      };
+    }
     if (dto.businessHours !== undefined) settings.businessHours = dto.businessHours;
     if (dto.socialMedia !== undefined) settings.socialMedia = dto.socialMedia;
     if (dto.logoUrl !== undefined) settings.logoUrl = dto.logoUrl;
@@ -206,9 +215,21 @@ export class SiteSettingsService {
         adminEmail: 'admin@yourcompany.com',
         timezone: 'UTC',
         contactNumber: '+1234567890',
-        businessAddress: '',
-        businessHours: '',
-        socialMedia: {},
+        businessAddress: {
+          line1: '123 Business Street',
+          line2: 'Suite 100',
+          city: 'Your City',
+          state: 'Your State',
+          country: 'Your Country',
+          pinCode: '12345'
+        },
+        businessHours: 'Monday - Friday: 9:00 AM - 6:00 PM',
+        socialMedia: {
+          facebook: '',
+          twitter: '',
+          instagram: '',
+          linkedin: ''
+        },
         logoUrl: '',
         faviconUrl: '',
         isActive: true
@@ -228,12 +249,28 @@ export class SiteSettingsService {
   }> {
     const settings = await this.getMainSiteSettings();
     
+    // Format business address as string for email templates
+    let addressString = '';
+    if (settings.businessAddress && typeof settings.businessAddress === 'object') {
+      const addressParts = [
+        settings.businessAddress.line1,
+        settings.businessAddress.line2,
+        settings.businessAddress.city,
+        settings.businessAddress.state,
+        settings.businessAddress.country,
+        settings.businessAddress.pinCode
+      ].filter(part => part && part.trim() !== '');
+      addressString = addressParts.join(', ');
+    } else if (typeof settings.businessAddress === 'string') {
+      addressString = settings.businessAddress;
+    }
+    
     return {
       siteName: settings.siteName,
       siteUrl: settings.siteUrl,
       businessEmail: settings.businessEmail,
       contactNumber: settings.contactNumber,
-      businessAddress: settings.businessAddress
+      businessAddress: addressString
     };
   }
 } 

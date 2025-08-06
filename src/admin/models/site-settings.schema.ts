@@ -1,5 +1,14 @@
 import { Schema, model, Document } from 'mongoose';
 
+export interface BusinessAddress {
+  line1: string;
+  line2?: string;
+  city: string;
+  state: string;
+  country: string;
+  pinCode: string;
+}
+
 export interface SiteSettings extends Document {
   key: string;
   siteName: string;
@@ -9,7 +18,7 @@ export interface SiteSettings extends Document {
   adminEmail: string;
   timezone: string;
   contactNumber: string;
-  businessAddress: string;
+  businessAddress: BusinessAddress;
   businessHours: string;
   socialMedia: {
     facebook?: string;
@@ -60,9 +69,13 @@ const SiteSettingsSchema = new Schema<SiteSettings>({
     type: String, 
     required: true 
   },
-  businessAddress: { 
-    type: String, 
-    default: '' 
+  businessAddress: {
+    line1: { type: String, default: '' },
+    line2: { type: String, default: '' },
+    city: { type: String, default: '' },
+    state: { type: String, default: '' },
+    country: { type: String, default: '' },
+    pinCode: { type: String, default: '' }
   },
   businessHours: { 
     type: String, 

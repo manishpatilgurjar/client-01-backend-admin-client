@@ -1,21 +1,67 @@
-import { IsString, IsEmail, IsOptional, IsBoolean, IsUrl, ValidateNested } from 'class-validator';
+import { IsString, IsEmail, IsOptional, IsBoolean, IsUrl, ValidateNested, ValidationArguments, ValidatorConstraint, ValidatorConstraintInterface, Validate } from 'class-validator';
 import { Type } from 'class-transformer';
+
+export class BusinessAddressDto {
+  @IsOptional()
+  @IsString()
+  line1?: string;
+
+  @IsOptional()
+  @IsString()
+  line2?: string;
+
+  @IsOptional()
+  @IsString()
+  city?: string;
+
+  @IsOptional()
+  @IsString()
+  state?: string;
+
+  @IsOptional()
+  @IsString()
+  country?: string;
+
+  @IsOptional()
+  @IsString()
+  pinCode?: string;
+}
+
+@ValidatorConstraint({ name: 'IsUrlOrEmpty', async: false })
+export class IsUrlOrEmptyConstraint implements ValidatorConstraintInterface {
+  validate(value: any, args: ValidationArguments) {
+    if (!value || value === '') {
+      return true; // Allow empty string
+    }
+    // Use the standard URL validation for non-empty values
+    try {
+      new URL(value);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  defaultMessage(args: ValidationArguments) {
+    return `${args.property} must be a valid URL or empty`;
+  }
+}
 
 export class SocialMediaDto {
   @IsOptional()
-  @IsUrl()
+  @Validate(IsUrlOrEmptyConstraint)
   facebook?: string;
 
   @IsOptional()
-  @IsUrl()
+  @Validate(IsUrlOrEmptyConstraint)
   twitter?: string;
 
   @IsOptional()
-  @IsUrl()
+  @Validate(IsUrlOrEmptyConstraint)
   instagram?: string;
 
   @IsOptional()
-  @IsUrl()
+  @Validate(IsUrlOrEmptyConstraint)
   linkedin?: string;
 }
 
@@ -46,8 +92,9 @@ export class CreateSiteSettingsDto {
   contactNumber: string;
 
   @IsOptional()
-  @IsString()
-  businessAddress?: string;
+  @ValidateNested()
+  @Type(() => BusinessAddressDto)
+  businessAddress?: BusinessAddressDto;
 
   @IsOptional()
   @IsString()
@@ -59,11 +106,11 @@ export class CreateSiteSettingsDto {
   socialMedia?: SocialMediaDto;
 
   @IsOptional()
-  @IsUrl()
+  @Validate(IsUrlOrEmptyConstraint)
   logoUrl?: string;
 
   @IsOptional()
-  @IsUrl()
+  @Validate(IsUrlOrEmptyConstraint)
   faviconUrl?: string;
 
   @IsOptional()
@@ -101,8 +148,9 @@ export class UpdateSiteSettingsDto {
   contactNumber?: string;
 
   @IsOptional()
-  @IsString()
-  businessAddress?: string;
+  @ValidateNested()
+  @Type(() => BusinessAddressDto)
+  businessAddress?: BusinessAddressDto;
 
   @IsOptional()
   @IsString()
@@ -114,11 +162,11 @@ export class UpdateSiteSettingsDto {
   socialMedia?: SocialMediaDto;
 
   @IsOptional()
-  @IsUrl()
+  @Validate(IsUrlOrEmptyConstraint)
   logoUrl?: string;
 
   @IsOptional()
-  @IsUrl()
+  @Validate(IsUrlOrEmptyConstraint)
   faviconUrl?: string;
 
   @IsOptional()
@@ -136,7 +184,7 @@ export class SiteSettingsResponseDto {
   adminEmail: string;
   timezone: string;
   contactNumber: string;
-  businessAddress: string;
+  businessAddress: BusinessAddressDto;
   businessHours: string;
   socialMedia: SocialMediaDto;
   logoUrl: string;
